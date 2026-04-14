@@ -110,12 +110,12 @@ async def upload_file(
         if session:
             uploader_email = session.email
 
-    # Also check if authenticated user
+    # Also check if authenticated user — use email if set, fall back to username
     if not uploader_email:
         from eventdrop.auth.dependencies import get_current_user_optional
         auth_user = await get_current_user_optional(request, db)
-        if auth_user and auth_user.email:
-            uploader_email = auth_user.email
+        if auth_user:
+            uploader_email = auth_user.email or f"{auth_user.username}@eventdrop.local"
 
     if not uploader_email:
         raise HTTPException(status_code=400, detail="Email required. Please set your email before uploading.")
