@@ -1,6 +1,6 @@
 services:
   eventdrop:
-    image: acaranta/eventdrop:latest
+    build: .
     container_name: eventdrop
     restart: unless-stopped
     ports:
