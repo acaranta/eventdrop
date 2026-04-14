@@ -68,7 +68,7 @@
                     <option value="" {% if not uploader_filter %}selected{% endif %}>All uploaders</option>
                     {% for contrib in contributors %}
                     <option value="{{ contrib.email }}" {% if uploader_filter == contrib.email %}selected{% endif %}>
-                        {{ contrib.email.split('@')[0] }} ({{ contrib.count }})
+                        {{ contrib.email }} ({{ contrib.count }})
                     </option>
                     {% endfor %}
                 </select>
@@ -104,7 +104,7 @@
             <span>Showing {{ media_with_urls|length }} item{{ 's' if media_with_urls|length != 1 }} · Filtered by:</span>
             {% if uploader_filter %}
             <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full">
-                👤 {{ uploader_filter.split('@')[0] }}
+                👤 {{ uploader_filter }}
             </span>
             {% endif %}
             {% if source_filter %}
@@ -140,7 +140,7 @@
                 <span class="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-300 text-xs font-bold flex-shrink-0">
                     {{ contrib.email[0]|upper }}
                 </span>
-                <span class="truncate max-w-[120px]">{{ contrib.email.split('@')[0] }}</span>
+                <span class="truncate max-w-[160px]" title="{{ contrib.email }}">{{ contrib.email }}</span>
                 <span class="text-xs {% if uploader_filter == contrib.email %}text-indigo-200{% else %}text-gray-400 dark:text-gray-500{% endif %} ml-0.5">{{ contrib.count }}</span>
             </a>
             {% endfor %}
