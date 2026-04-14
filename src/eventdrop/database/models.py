@@ -112,6 +112,8 @@ class MediaFile(Base):
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=_now, nullable=False)
     checksum: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     source: Mapped[str] = mapped_column(String(50), nullable=False, default="upload")
+    upload_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    message_is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # Relationships
     event: Mapped["Event"] = relationship("Event", back_populates="media_files")

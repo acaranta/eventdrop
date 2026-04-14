@@ -89,8 +89,23 @@ async def edit_event_form(event_id: str, request: Request, user=Depends(get_curr
     qr_code = generate_qr_code_base64(upload_url)
     stats = await event_service.get_event_stats(db, event_id)
     flash = request.session.pop("flash", None)
+
+    from sqlalchemy import select, func
+    from eventdrop.database.models import MediaFile
+    contrib_result = await db.execute(
+        select(
+            MediaFile.uploader_email,
+            func.count(MediaFile.id).label("count")
+        )
+        .where(MediaFile.event_id == event_id)
+        .group_by(MediaFile.uploader_email)
+        .order_by(func.count(MediaFile.id).desc())
+    )
+    contributors = [{"email": row.uploader_email, "count": row.count} for row in contrib_result]
+
     return templates.TemplateResponse(request, "events/edit_event.html", user_ctx(
-        request, user, event=event, upload_url=upload_url, qr_code=qr_code, stats=stats, flash=flash
+        request, user, event=event, upload_url=upload_url, qr_code=qr_code, stats=stats,
+        flash=flash, contributors=contributors
     ))
 
 

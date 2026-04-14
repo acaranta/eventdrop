@@ -1,6 +1,7 @@
 import hashlib
 import io
 import os
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,6 +12,34 @@ from sqlalchemy import select, delete
 
 from eventdrop.database.models import MediaFile, UploaderSession
 from eventdrop.storage.base import StorageBackend
+
+
+def sanitize_message(text: str) -> str:
+    """Sanitize user-supplied upload messages.
+
+    Rules:
+    - Strip/escape HTML tags to prevent XSS
+    - Disable URLs: replace "://" with " (:) //" so links are not clickable
+    - Strip null bytes and control characters (except newlines/tabs)
+    - Emojis are allowed
+    - Max 500 characters
+    """
+    if not text:
+        return ""
+    # Truncate
+    text = text[:500]
+    # Remove null bytes and dangerous control characters (keep \n, \t, space)
+    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
+    # Escape HTML special chars to prevent XSS
+    text = (text
+        .replace('&', '&amp;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;')
+        .replace('"', '&quot;')
+        .replace("'", '&#x27;'))
+    # Disable URLs by breaking the "://" pattern
+    text = re.sub(r'://', ' (:) //', text)
+    return text.strip()
 
 
 def compute_checksum(data: bytes) -> str:
@@ -75,6 +104,8 @@ async def store_media_file(
     file_data: bytes,
     mime_type: str,
     source: str = "upload",
+    upload_message: Optional[str] = None,
+    message_is_public: bool = False,
 ) -> MediaFile:
     """Store a media file and create/update the DB record."""
     file_datetime = extract_exif_datetime(file_data, mime_type)
@@ -123,6 +154,9 @@ async def store_media_file(
         existing.uploaded_at = datetime.now(timezone.utc)
         existing.checksum = checksum
         existing.source = source
+        if upload_message is not None:
+            existing.upload_message = sanitize_message(upload_message)
+            existing.message_is_public = message_is_public
         await db.flush()
         return existing
     else:
@@ -138,6 +172,8 @@ async def store_media_file(
             file_datetime=file_datetime,
             checksum=checksum,
             source=source,
+            upload_message=sanitize_message(upload_message) if upload_message else None,
+            message_is_public=message_is_public,
         )
         db.add(media_file)
         await db.flush()

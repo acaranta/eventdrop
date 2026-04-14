@@ -93,6 +93,8 @@ async def upload_file(
     event_id: str,
     request: Request,
     file: UploadFile = File(...),
+    upload_message: Optional[str] = Form(None),
+    message_is_public: bool = Form(False),
     db: AsyncSession = Depends(get_db),
 ):
     """Handle single file upload via AJAX."""
@@ -144,6 +146,8 @@ async def upload_file(
         file_data=file_data,
         mime_type=mime_type,
         source="upload",
+        upload_message=upload_message,
+        message_is_public=message_is_public,
     )
     await db.commit()
 
