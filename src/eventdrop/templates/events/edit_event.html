@@ -75,7 +75,7 @@
         <!-- QR code -->
         {% if qr_code %}
         <div class="flex items-start gap-4">
-            <img src="{{ qr_code }}" alt="QR Code for upload page"
+            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code for upload page"
                  class="w-28 h-28 rounded-lg border-2 border-white dark:border-gray-700 shadow-sm bg-white p-1">
             <div>
                 <p class="text-sm font-medium text-indigo-800 dark:text-indigo-200 mb-1">QR Code</p>
