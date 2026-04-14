@@ -110,19 +110,43 @@ app.include_router(api.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    from eventdrop.auth.dependencies import get_current_user_optional
-    user = await get_current_user_optional(request)
+    from sqlalchemy import select
+    from eventdrop.database.engine import AsyncSessionLocal
+    from eventdrop.database.models import User as UserModel
+
+    user = None
+    user_id = request.session.get("user_id")
+    if user_id:
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(select(UserModel).where(UserModel.id == user_id))
+            user = result.scalar_one_or_none()
+
     if user:
         from fastapi.responses import RedirectResponse
         return RedirectResponse(url="/events/")
-    return templates.TemplateResponse("index.html", {"request": request})
+
+    flash = request.session.get("flash")
+    if flash:
+        del request.session["flash"]
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request, "user": None, "settings": settings, "flash": flash},
+    )
 
 
 @app.exception_handler(404)
 async def not_found(request: Request, exc):
-    return templates.TemplateResponse("errors/404.html", {"request": request}, status_code=404)
+    return templates.TemplateResponse(
+        "errors/404.html",
+        {"request": request, "user": None, "settings": settings, "flash": None},
+        status_code=404,
+    )
 
 
 @app.exception_handler(500)
 async def server_error(request: Request, exc):
-    return templates.TemplateResponse("errors/500.html", {"request": request}, status_code=500)
+    return templates.TemplateResponse(
+        "errors/500.html",
+        {"request": request, "user": None, "settings": settings, "flash": None},
+        status_code=500,
+    )

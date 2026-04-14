@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EventDrop{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {}
+            }
+        }
+    </script>
+    <script>
+        // Apply dark mode from system preference on page load, before render
+        (function () {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            }
+            // Respect stored preference
+            const stored = localStorage.getItem('theme');
+            if (stored === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else if (stored === 'light') {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+    {% block head %}{% endblock %}
+</head>
+<body class="h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Brand -->
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2">
+                        <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">EventDrop</span>
+                    </a>
+                    {% if user %}
+                    <div class="hidden sm:ml-8 sm:flex sm:space-x-4">
+                        <a href="/events/"
+                           class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            My Events
+                        </a>
+                        {% if user.is_admin %}
+                        <a href="/admin/"
+                           class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            Admin
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Right side -->
+                <div class="flex items-center space-x-3">
+                    <!-- Dark mode toggle -->
+                    <button id="theme-toggle"
+                            title="Toggle dark mode"
+                            class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <svg id="icon-sun" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.95 2.636a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zm-3.05 4.95a1 1 0 01-1.414 0l-.707-.707a1 1 0 011.414-1.414l.707.707a1 1 0 010 1.414zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zm-4.95-2.636a1 1 0 010-1.414l.707-.707a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414 0zM3 10a1 1 0 011-1h1a1 1 0 010 2H4a1 1 0 01-1-1zm3.05-4.95a1 1 0 011.414 0l.707.707A1 1 0 016.757 7.17l-.707-.707a1 1 0 010-1.414zM10 6a4 4 0 100 8 4 4 0 000-8z" clip-rule="evenodd"/>
+                        </svg>
+                        <svg id="icon-moon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                        </svg>
+                    </button>
+
+                    {% if user %}
+                    <!-- User menu -->
+                    <div class="relative" id="user-menu-container">
+                        <button id="user-menu-btn"
+                                class="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                            <span class="w-7 h-7 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
+                                {{ user.username[0]|upper }}
+                            </span>
+                            <span class="hidden sm:block">{{ user.username }}</span>
+                            <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
+                        <div id="user-dropdown"
+                             class="hidden absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                            <div class="py-1">
+                                <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
+                                    Signed in as <span class="font-medium text-gray-700 dark:text-gray-200">{{ user.username }}</span>
+                                </div>
+                                <a href="/events/"
+                                   class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    My Events
+                                </a>
+                                {% if user.is_admin %}
+                                <a href="/admin/"
+                                   class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    Admin Panel
+                                </a>
+                                {% endif %}
+                                <div class="border-t border-gray-100 dark:border-gray-700"></div>
+                                <a href="/auth/logout"
+                                   class="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    Sign out
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- Login / Signup buttons -->
+                    <a href="/auth/login"
+                       class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md transition-colors">
+                        Log in
+                    </a>
+                    <a href="/auth/signup"
+                       class="text-sm font-medium bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors">
+                        Sign up
+                    </a>
+                    {% endif %}
+
+                    <!-- Mobile menu button -->
+                    <button id="mobile-menu-btn"
+                            class="sm:hidden p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden sm:hidden border-t border-gray-200 dark:border-gray-700">
+            <div class="px-4 py-3 space-y-1">
+                {% if user %}
+                <a href="/events/"
+                   class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    My Events
+                </a>
+                {% if user.is_admin %}
+                <a href="/admin/"
+                   class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Admin Panel
+                </a>
+                {% endif %}
+                <a href="/auth/logout"
+                   class="block px-3 py-2 rounded-md text-sm font-medium text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Sign out
+                </a>
+                {% else %}
+                <a href="/auth/login"
+                   class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Log in
+                </a>
+                <a href="/auth/signup"
+                   class="block px-3 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Sign up
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash messages -->
+    {% if flash %}
+    <div id="flash-message"
+         class="{% if flash.type == 'success' %}bg-green-50 dark:bg-green-900/30 border-green-400 text-green-800 dark:text-green-200{% else %}bg-red-50 dark:bg-red-900/30 border-red-400 text-red-800 dark:text-red-200{% endif %} border-l-4 px-6 py-3 flex justify-between items-center">
+        <span>{{ flash.message }}</span>
+        <button onclick="document.getElementById('flash-message').remove()" class="ml-4 opacity-60 hover:opacity-100 text-lg leading-none">&times;</button>
+    </div>
+    {% endif %}
+
+    <!-- Main content -->
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    &copy; EventDrop — Share your event moments
+                </p>
+                <div class="flex space-x-4 text-sm text-gray-400 dark:text-gray-500">
+                    <a href="/" class="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Home</a>
+                    {% if user %}
+                    <a href="/events/" class="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Events</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Dark mode toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const iconSun = document.getElementById('icon-sun');
+        const iconMoon = document.getElementById('icon-moon');
+
+        function updateIcons() {
+            if (document.documentElement.classList.contains('dark')) {
+                iconSun.classList.remove('hidden');
+                iconMoon.classList.add('hidden');
+            } else {
+                iconSun.classList.add('hidden');
+                iconMoon.classList.remove('hidden');
+            }
+        }
+
+        updateIcons();
+
+        themeToggle.addEventListener('click', function () {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateIcons();
+        });
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', function () {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+
+        // User dropdown
+        const userMenuBtn = document.getElementById('user-menu-btn');
+        const userDropdown = document.getElementById('user-dropdown');
+        if (userMenuBtn) {
+            userMenuBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                userDropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', function () {
+                userDropdown.classList.add('hidden');
+            });
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
