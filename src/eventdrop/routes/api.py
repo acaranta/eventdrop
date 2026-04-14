@@ -194,6 +194,49 @@ async def delete_single_media(
     return JSONResponse({"deleted": success})
 
 
+@router.post("/events/{event_id}/email-config/force-poll")
+async def force_poll_email(
+    event_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    from eventdrop.auth.dependencies import get_current_user_optional
+    from eventdrop.database.models import EventEmailConfig
+    from eventdrop.services.email_ingestion import poll_mailbox
+
+    user = await get_current_user_optional(request, db)
+    if not user:
+        raise HTTPException(status_code=401)
+
+    event = await event_service.get_event(db, event_id)
+    if not event:
+        raise HTTPException(status_code=404)
+    if str(event.owner_id) != str(user.id) and not user.is_admin:
+        raise HTTPException(status_code=403)
+
+    result = await db.execute(
+        select(EventEmailConfig).where(
+            EventEmailConfig.event_id == event_id,
+            EventEmailConfig.is_enabled == True,  # noqa: E712
+        )
+    )
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="No active email config for this event")
+
+    try:
+        await poll_mailbox(config)
+        await db.refresh(config)
+        return JSONResponse({
+            "success": True,
+            "last_poll_status": config.last_poll_status,
+            "last_poll_media_count": config.last_poll_media_count,
+            "last_poll_error": config.last_poll_error,
+        })
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
 @router.post("/events/{event_id}/email-config/test")
 async def test_email_connection(
     event_id: str,

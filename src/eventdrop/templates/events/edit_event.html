@@ -201,6 +201,19 @@
         <!-- Email ingestion partial (with event context) -->
         {% include "events/partials/email_config_form.html" %}
 
+        <!-- Force poll button -->
+        {% if event.email_config and event.email_config.is_enabled %}
+        <div class="flex items-center gap-2">
+            <button type="button" onclick="forcePollEmail('{{ event.id }}')"
+              id="force-poll-btn"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Check Now
+            </button>
+            <span id="poll-result" class="text-xs text-slate-500 ml-2"></span>
+        </div>
+        {% endif %}
+
         <!-- Save actions -->
         <div class="flex gap-3">
             <button type="submit"
@@ -365,5 +378,30 @@ function closeDeleteModal() {
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeDeleteModal();
 });
+</script>
+<script>
+async function forcePollEmail(eventId) {
+  const btn = document.getElementById('force-poll-btn');
+  const result = document.getElementById('poll-result');
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking...'; }
+  if (result) result.textContent = '';
+  try {
+    const res = await fetch(`/api/events/${eventId}/email-config/force-poll`, { method: 'POST' });
+    const data = await res.json();
+    if (result) {
+      if (data.success) {
+        result.textContent = `Done! ${data.last_poll_media_count || 0} new file(s) ingested.`;
+        result.className = 'text-xs text-green-600 ml-2';
+      } else {
+        result.textContent = `Error: ${data.error || data.last_poll_error || 'Unknown'}`;
+        result.className = 'text-xs text-red-600 ml-2';
+      }
+    }
+  } catch(e) {
+    if (result) { result.textContent = 'Request failed.'; result.className = 'text-xs text-red-600 ml-2'; }
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Check Now'; }
+  }
+}
 </script>
 {% endblock %}

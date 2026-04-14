@@ -99,8 +99,10 @@ async def serve_media(path: str):
 # Register routers
 from eventdrop.routes import admin, events, upload, gallery, api  # noqa: E402
 from eventdrop.auth.routes import router as auth_router  # noqa: E402
+from eventdrop.routes.account import router as account_router  # noqa: E402
 
 app.include_router(auth_router)
+app.include_router(account_router)
 app.include_router(admin.router)
 app.include_router(events.router)
 app.include_router(upload.router)

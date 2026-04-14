@@ -118,3 +118,27 @@ async def admin_toggle_admin(user_id: str, request: Request, admin=Depends(requi
     user.is_admin = not user.is_admin
     await db.commit()
     return RedirectResponse(url="/admin/users", status_code=303)
+
+
+@router.get("/settings", response_class=HTMLResponse)
+async def admin_settings(request: Request, admin=Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    from eventdrop.services.settings_service import get_setting
+    allow_registration = (await get_setting(db, "allow_registration")) == "true"
+    flash = request.session.pop("flash", None)
+    return templates.TemplateResponse(request, "admin/settings.html", admin_ctx(
+        request, admin, allow_registration=allow_registration, flash=flash
+    ))
+
+
+@router.post("/settings")
+async def admin_settings_post(
+    request: Request,
+    allow_registration: bool = Form(False),
+    admin=Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from eventdrop.services.settings_service import set_setting
+    await set_setting(db, "allow_registration", "true" if allow_registration else "false")
+    await db.commit()
+    request.session["flash"] = {"type": "success", "message": "Settings saved."}
+    return RedirectResponse(url="/admin/settings", status_code=303)
