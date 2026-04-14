@@ -191,6 +191,10 @@ async def poll_pop3(config: EventEmailConfig, db: AsyncSession):
 
     results = await asyncio.to_thread(pop3_work)
 
+    # Track which UIDs we've already recorded in this session to avoid
+    # duplicate ProcessedEmail inserts when one message has multiple attachments.
+    newly_recorded_uids: set[str] = set()
+
     for item in results:
         try:
             await store_media_file(
@@ -204,16 +208,20 @@ async def poll_pop3(config: EventEmailConfig, db: AsyncSession):
                 source="email",
             )
             media_count += 1
+        except Exception as e:
+            logger.warning(f"Failed to store email attachment: {e}")
+            continue
 
-            # Record as processed (for POP3 deduplication)
+        # Record message as processed only once per UID
+        uid = item["uid"]
+        if uid not in newly_recorded_uids:
             pe = ProcessedEmail(
                 id=str(uuid.uuid4()),
                 event_email_config_id=config.id,
-                message_uid=item["uid"],
+                message_uid=uid,
             )
             db.add(pe)
-        except Exception as e:
-            logger.warning(f"Failed to store email attachment: {e}")
+            newly_recorded_uids.add(uid)
 
     await db.flush()
     return media_count
