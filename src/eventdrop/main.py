@@ -129,16 +129,18 @@ async def root(request: Request):
     if flash:
         del request.session["flash"]
     return templates.TemplateResponse(
+        request,
         "index.html",
-        {"request": request, "user": None, "settings": settings, "flash": flash},
+        {"user": None, "settings": settings, "flash": flash},
     )
 
 
 @app.exception_handler(404)
 async def not_found(request: Request, exc):
     return templates.TemplateResponse(
+        request,
         "errors/404.html",
-        {"request": request, "user": None, "settings": settings, "flash": None},
+        {"user": None, "settings": settings, "flash": None},
         status_code=404,
     )
 
@@ -146,7 +148,8 @@ async def not_found(request: Request, exc):
 @app.exception_handler(500)
 async def server_error(request: Request, exc):
     return templates.TemplateResponse(
+        request,
         "errors/500.html",
-        {"request": request, "user": None, "settings": settings, "flash": None},
+        {"user": None, "settings": settings, "flash": None},
         status_code=500,
     )

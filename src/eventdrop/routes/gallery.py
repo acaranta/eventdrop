@@ -58,8 +58,7 @@ async def gallery_page(event_id: str, request: Request, db: AsyncSession = Depen
             "uploader_email": mf.uploader_email,
         })
 
-    return templates.TemplateResponse("gallery/gallery.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "gallery/gallery.html", {
         "user": auth_user,
         "settings": settings,
         "event": event,

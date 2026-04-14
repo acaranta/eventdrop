@@ -51,8 +51,7 @@ async def upload_page(event_id: str, request: Request, db: AsyncSession = Depend
     from eventdrop.auth.dependencies import get_current_user_optional
     auth_user = await get_current_user_optional(request, db)
 
-    return templates.TemplateResponse("upload/upload.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "upload/upload.html", {
         "user": auth_user,
         "settings": settings,
         "event": event,

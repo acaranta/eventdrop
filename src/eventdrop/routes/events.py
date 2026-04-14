@@ -19,20 +19,20 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
 def user_ctx(request, user, **kwargs):
-    return {"request": request, "user": user, "settings": settings, **kwargs}
+    return {"user": user, "settings": settings, **kwargs}
 
 
 @router.get("/", response_class=HTMLResponse)
 async def my_events(request: Request, user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     events = await event_service.list_events_by_owner(db, str(user.id))
     flash = request.session.pop("flash", None)
-    return templates.TemplateResponse("events/my_events.html", user_ctx(request, user, events=events, flash=flash))
+    return templates.TemplateResponse(request, "events/my_events.html", user_ctx(request, user, events=events, flash=flash))
 
 
 @router.get("/create", response_class=HTMLResponse)
 async def create_event_form(request: Request, user=Depends(get_current_user)):
     flash = request.session.pop("flash", None)
-    return templates.TemplateResponse("events/create_event.html", user_ctx(request, user, flash=flash))
+    return templates.TemplateResponse(request, "events/create_event.html", user_ctx(request, user, flash=flash))
 
 
 @router.post("/create")
@@ -89,7 +89,7 @@ async def edit_event_form(event_id: str, request: Request, user=Depends(get_curr
     qr_code = generate_qr_code_base64(upload_url)
     stats = await event_service.get_event_stats(db, event_id)
     flash = request.session.pop("flash", None)
-    return templates.TemplateResponse("events/edit_event.html", user_ctx(
+    return templates.TemplateResponse(request, "events/edit_event.html", user_ctx(
         request, user, event=event, upload_url=upload_url, qr_code=qr_code, stats=stats, flash=flash
     ))
 

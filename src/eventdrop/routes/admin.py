@@ -17,7 +17,7 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
 def admin_ctx(request, admin_user, **kwargs):
-    return {"request": request, "user": admin_user, "settings": __import__("eventdrop.config", fromlist=["settings"]).settings, **kwargs}
+    return {"user": admin_user, "settings": __import__("eventdrop.config", fromlist=["settings"]).settings, **kwargs}
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -40,7 +40,7 @@ async def dashboard(request: Request, admin=Depends(require_admin), db: AsyncSes
     )).scalars().all()
 
     flash = request.session.pop("flash", None)
-    return templates.TemplateResponse("admin/dashboard.html", admin_ctx(
+    return templates.TemplateResponse(request, "admin/dashboard.html", admin_ctx(
         request, admin,
         users_count=users_count,
         events_count=events_count,
@@ -56,7 +56,7 @@ async def dashboard(request: Request, admin=Depends(require_admin), db: AsyncSes
 async def admin_events(request: Request, admin=Depends(require_admin), db: AsyncSession = Depends(get_db)):
     events = await event_service.list_all_events(db)
     flash = request.session.pop("flash", None)
-    return templates.TemplateResponse("admin/events.html", admin_ctx(request, admin, events=events, flash=flash))
+    return templates.TemplateResponse(request, "admin/events.html", admin_ctx(request, admin, events=events, flash=flash))
 
 
 @router.get("/events/{event_id}", response_class=HTMLResponse)
@@ -77,7 +77,7 @@ async def admin_event_detail(event_id: str, request: Request, admin=Depends(requ
         thumb_url = await storage.get_url(mf.thumb_path) if mf.thumb_path else None
         media_with_urls.append({"media": mf, "url": url, "thumb_url": thumb_url})
     flash = request.session.pop("flash", None)
-    return templates.TemplateResponse("admin/event_detail.html", admin_ctx(
+    return templates.TemplateResponse(request, "admin/event_detail.html", admin_ctx(
         request, admin, event=event, media_with_urls=media_with_urls, flash=flash
     ))
 
@@ -95,7 +95,7 @@ async def admin_delete_event(event_id: str, request: Request, admin=Depends(requ
 async def admin_users(request: Request, admin=Depends(require_admin), db: AsyncSession = Depends(get_db)):
     users = await user_service.list_users(db)
     flash = request.session.pop("flash", None)
-    return templates.TemplateResponse("admin/users.html", admin_ctx(request, admin, users=users, flash=flash))
+    return templates.TemplateResponse(request, "admin/users.html", admin_ctx(request, admin, users=users, flash=flash))
 
 
 @router.post("/users/{user_id}/delete")

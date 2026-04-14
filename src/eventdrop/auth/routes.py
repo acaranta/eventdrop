@@ -36,7 +36,6 @@ def _pop_flash(request: Request) -> Optional[dict]:
 def _ctx(request: Request, user=None, **kwargs) -> dict:
     """Build a base template context with flash, user and settings."""
     return {
-        "request": request,
         "user": user,
         "settings": settings,
         "flash": _pop_flash(request),
@@ -54,6 +53,7 @@ async def login_get(
     if user is not None:
         return RedirectResponse(url="/events/", status_code=302)
     return templates.TemplateResponse(
+        request,
         "auth/login.html",
         _ctx(request, user=None, error=None, oidc_enabled=settings.is_oidc_configured()),
     )
@@ -72,6 +72,7 @@ async def login_post(
 
     if user is None or not user.password_hash or not verify_password(password, user.password_hash):
         return templates.TemplateResponse(
+            request,
             "auth/login.html",
             _ctx(
                 request,
@@ -91,6 +92,7 @@ async def login_post(
 async def signup_get(request: Request):
     """Display the sign-up page."""
     return templates.TemplateResponse(
+        request,
         "auth/signup.html",
         _ctx(request, user=None, error=None),
     )
@@ -109,6 +111,7 @@ async def signup_post(
     # Validate password length
     if len(password) < 8:
         return templates.TemplateResponse(
+            request,
             "auth/signup.html",
             _ctx(request, user=None, error="Password must be at least 8 characters long"),
             status_code=400,
@@ -117,6 +120,7 @@ async def signup_post(
     # Validate password confirmation if provided
     if confirm_password and password != confirm_password:
         return templates.TemplateResponse(
+            request,
             "auth/signup.html",
             _ctx(request, user=None, error="Passwords do not match"),
             status_code=400,
@@ -127,6 +131,7 @@ async def signup_post(
     existing = result.scalar_one_or_none()
     if existing:
         return templates.TemplateResponse(
+            request,
             "auth/signup.html",
             _ctx(request, user=None, error="Username already taken"),
             status_code=400,
