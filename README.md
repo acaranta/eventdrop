@@ -6,10 +6,15 @@ EventDrop is a self-hosted web application for collecting and sharing photos and
 
 - [Features](#features)
 - [Quick Start](#quick-start)
+- [Building from Source](#building-from-source)
 - [Configuration](#configuration)
 - [Development Setup](#development-setup)
 - [Architecture Overview](#architecture-overview)
 - [Usage Guide](#usage-guide)
+  - [Upload Messages](#upload-messages)
+  - [Gallery Filtering](#gallery-filtering)
+  - [Media Attribution](#media-attribution)
+  - [Contributors List](#contributors-list)
 - [Email Ingestion](#email-ingestion)
 - [Storage Backends](#storage-backends)
 - [Database](#database)
@@ -39,13 +44,15 @@ EventDrop is a self-hosted web application for collecting and sharing photos and
 
 ## Quick Start
 
-The fastest way to run EventDrop is with Docker Compose. Clone the repository and start the stack:
+The fastest way to run EventDrop is with Docker Compose. The image is available on Docker Hub as `acaranta/eventdrop:latest`.
+
+Download the `docker-compose.yml` file (or clone the repository) and start the stack:
 
 ```bash
-git clone <repository-url>
-cd eventdrop
-docker-compose up -d
+docker compose up -d
 ```
+
+No build step is needed — Docker will pull the pre-built image automatically.
 
 The application starts on **http://localhost:8000**. Log in with the default credentials:
 
@@ -57,16 +64,30 @@ The application starts on **http://localhost:8000**. Log in with the default cre
 To follow logs:
 
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 To stop:
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 Persistent data (database and media files) is stored in the `eventdrop_data` Docker volume.
+
+---
+
+## Building from Source
+
+If you want to build the Docker image yourself instead of using the pre-built one from Docker Hub:
+
+```bash
+git clone <repository-url>
+cd eventdrop
+docker build -t acaranta/eventdrop:latest .
+```
+
+Then run with Docker Compose as normal — the locally built image will be used since its tag matches the one referenced in `docker-compose.yml`.
 
 ---
 
@@ -288,6 +309,22 @@ Browse uploaded media at `/e/<event_id>/gallery/`. The gallery shows thumbnails 
 ### Bulk Download
 
 From the gallery, select individual files or click **Download All**. EventDrop assembles a ZIP archive on demand and provides a time-limited download link (default: 15 minutes). The archive is named after the event and the number of files included.
+
+### Upload Messages
+
+When uploading files, users can optionally add a text message (up to 500 characters) to their batch. The message is attached to every file in that upload session. A "Make message visible to everyone" toggle controls whether the message appears in the public gallery or only to the event owner/admin. Messages are sanitized: HTML is escaped, URLs are deactivated, and JavaScript injection is prevented.
+
+### Gallery Filtering
+
+The gallery supports filtering by uploader and upload type. Use the filter bar at the top of the gallery to view photos from a specific contributor or filter by "Web upload" vs "Email". Filters are applied via URL query parameters (`?uploader=email@example.com&source=upload`), making filtered views shareable.
+
+### Media Attribution
+
+Each media item in the gallery displays its filename, file size, upload date, uploader email, and source type. If the uploader added a message, it appears below the media thumbnail.
+
+### Contributors List
+
+The event management page and gallery both show a contributors panel listing everyone who uploaded media, with their upload count and a link to filter the gallery to their contributions only.
 
 ### Managing an Event
 
