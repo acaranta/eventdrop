@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}My Events — EventDrop{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">My Events</h1>
+        <a href="/events/create" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors">
+            + New Event
+        </a>
+    </div>
+
+    {% if events %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for event in events %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col">
+            <div class="flex items-start justify-between mb-2">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{{ event.name }}</h2>
+                <span class="ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' if event.is_active else 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' }}">
+                    {{ "Active" if event.is_active else "Closed" }}
+                </span>
+            </div>
+            {% if event.description %}
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{{ event.description }}</p>
+            {% endif %}
+            <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">ID: {{ event.id }}</p>
+            <div class="mt-auto flex gap-2 flex-wrap">
+                <a href="/events/{{ event.id }}/edit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors">Edit</a>
+                <a href="/e/{{ event.id }}/" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors">Upload Page</a>
+                <a href="/e/{{ event.id }}/gallery/" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded transition-colors">Gallery</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-16">
+        <p class="text-gray-500 dark:text-gray-400 mb-4">You have no events yet.</p>
+        <a href="/events/create" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">
+            Create your first event
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Upload — {{ event.name }} — EventDrop{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{{ event.name }}</h1>
+    {% if event.description %}
+    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ event.description }}</p>
+    {% endif %}
+
+    {% if email_ingestion_address %}
+    <div class="bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg p-4 mb-6">
+        <p class="text-sm font-medium text-purple-800 dark:text-purple-200 mb-1">Email Ingestion</p>
+        <p class="text-sm text-purple-700 dark:text-purple-300">Send photos as attachments to: <strong>{{ email_ingestion_address }}</strong></p>
+    </div>
+    {% endif %}
+
+    <!-- Email setup -->
+    {% if not uploader_email and not user %}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Your Email</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Enter your email so we can attribute your uploads.</p>
+        <form method="post" action="/e/{{ event.id }}/set-email" class="flex gap-2">
+            <input type="email" name="email" required placeholder="you@example.com"
+                   class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">Continue</button>
+        </form>
+    </div>
+    {% else %}
+    <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mb-6">
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+            Uploading as: <strong class="text-gray-900 dark:text-gray-100">{{ uploader_email or user.email or user.username }}</strong>
+        </p>
+        {% if not user %}
+        <form method="post" action="/e/{{ event.id }}/clear-email" class="ml-2">
+            <button type="submit" class="text-xs text-red-600 dark:text-red-400 hover:underline">Change</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Upload area -->
+    <div id="upload-area"
+         class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-10 text-center cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors mb-4"
+         onclick="document.getElementById('file-input').click()"
+         ondragover="event.preventDefault(); this.classList.add('border-blue-400')"
+         ondragleave="this.classList.remove('border-blue-400')"
+         ondrop="handleDrop(event)">
+        <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <p class="text-gray-600 dark:text-gray-400 text-sm">Drag &amp; drop files here, or click to select</p>
+        <p class="text-gray-400 dark:text-gray-500 text-xs mt-1">Images and videos up to {{ settings.max_upload_size_mb }}MB each</p>
+        <input type="file" id="file-input" multiple accept="image/*,video/*" class="hidden" onchange="handleFiles(this.files)">
+    </div>
+
+    <!-- Upload queue -->
+    <div id="upload-queue" class="space-y-2"></div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+{% if uploader_email or user %}
+<script>
+const eventId = "{{ event.id }}";
+
+function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('upload-area').classList.remove('border-blue-400');
+    handleFiles(e.dataTransfer.files);
+}
+
+function handleFiles(files) {
+    for (const file of files) {
+        uploadFile(file);
+    }
+}
+
+function uploadFile(file) {
+    const queue = document.getElementById('upload-queue');
+    const id = 'file-' + Math.random().toString(36).substr(2, 9);
+    const item = document.createElement('div');
+    item.id = id;
+    item.className = 'flex items-center gap-3 bg-white dark:bg-gray-800 rounded-lg p-3 shadow';
+    item.innerHTML = `
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">${file.name}</p>
+            <div class="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                <div id="${id}-bar" class="bg-blue-600 h-1.5 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+        <span id="${id}-status" class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">Uploading...</span>
+    `;
+    queue.appendChild(item);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `/api/e/${eventId}/upload`);
+    xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            document.getElementById(`${id}-bar`).style.width = pct + '%';
+        }
+    };
+    xhr.onload = function() {
+        const statusEl = document.getElementById(`${id}-status`);
+        const barEl = document.getElementById(`${id}-bar`);
+        if (xhr.status === 200) {
+            barEl.style.width = '100%';
+            barEl.className = 'bg-green-500 h-1.5 rounded-full';
+            statusEl.textContent = 'Done';
+            statusEl.className = 'text-xs text-green-600 dark:text-green-400 flex-shrink-0';
+        } else {
+            let msg = 'Error';
+            try { msg = JSON.parse(xhr.responseText).detail || 'Error'; } catch(e) {}
+            barEl.className = 'bg-red-500 h-1.5 rounded-full';
+            statusEl.textContent = msg;
+            statusEl.className = 'text-xs text-red-600 dark:text-red-400 flex-shrink-0';
+        }
+    };
+    xhr.onerror = function() {
+        document.getElementById(`${id}-status`).textContent = 'Failed';
+    };
+    xhr.send(formData);
+}
+</script>
+{% endif %}
+{% endblock %}

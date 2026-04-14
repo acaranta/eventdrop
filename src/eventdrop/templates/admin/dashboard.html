@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — EventDrop{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Admin Dashboard</h1>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Users</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ users_count }}</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Events</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ events_count }}</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Media Files</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ media_count }}</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Active Email Configs</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ email_configs_count }}</p>
+        </div>
+    </div>
+    <div class="flex gap-4">
+        <a href="/admin/events" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors">Manage Events</a>
+        <a href="/admin/users" class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-md transition-colors">Manage Users</a>
+    </div>
+</div>
+{% endblock %}

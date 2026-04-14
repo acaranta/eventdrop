@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Edit Event — {{ event.name }} — EventDrop{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-4">
+        <a href="/events/" class="text-blue-600 dark:text-blue-400 hover:underline text-sm">&larr; My Events</a>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Edit Event</h1>
+
+    <!-- Upload link & QR -->
+    <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
+        <p class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">Upload Link</p>
+        <div class="flex items-center gap-2">
+            <input type="text" value="{{ upload_url }}" readonly
+                   class="flex-1 px-3 py-1.5 text-sm border border-blue-300 dark:border-blue-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                   onclick="this.select()">
+            <a href="/events/{{ event.id }}/qr.png" download class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors">Download QR</a>
+        </div>
+        {% if qr_code %}
+        <img src="{{ qr_code }}" alt="QR Code" class="mt-3 w-32 h-32">
+        {% endif %}
+    </div>
+
+    <!-- Stats -->
+    {% if stats %}
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Files</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ stats.file_count }}</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Total Size</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ "%.1f"|format(stats.total_size / 1048576) }} MB</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="post" action="/events/{{ event.id }}/edit" class="space-y-6">
+        <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Event Name <span class="text-red-500">*</span></label>
+            <input type="text" id="name" name="name" required value="{{ event.name }}"
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+            <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <textarea id="description" name="description" rows="3"
+                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ event.description or "" }}</textarea>
+        </div>
+
+        <div class="space-y-3">
+            <div class="flex items-center">
+                <input type="checkbox" id="is_active" name="is_active" value="true" {{ "checked" if event.is_active }}
+                       class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
+                <label for="is_active" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Event active (accept uploads)</label>
+            </div>
+            <div class="flex items-center">
+                <input type="checkbox" id="is_gallery_public" name="is_gallery_public" value="true" {{ "checked" if event.is_gallery_public }}
+                       class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
+                <label for="is_gallery_public" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Public gallery</label>
+            </div>
+            <div class="flex items-center">
+                <input type="checkbox" id="allow_public_download" name="allow_public_download" value="true" {{ "checked" if event.allow_public_download }}
+                       class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
+                <label for="allow_public_download" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Allow public download</label>
+            </div>
+        </div>
+
+        {% if settings.email_ingestion_enabled %}
+        {% set ec = event.email_config %}
+        <div class="border border-gray-200 dark:border-gray-700 rounded-md p-4">
+            <div class="flex items-center mb-3">
+                <input type="checkbox" id="email_enabled" name="email_enabled" value="true" {{ "checked" if ec and ec.is_enabled }}
+                       class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded"
+                       onchange="document.getElementById('email-config').classList.toggle('hidden', !this.checked)">
+                <label for="email_enabled" class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Enable email ingestion</label>
+            </div>
+            <div id="email-config" class="{{ '' if ec and ec.is_enabled else 'hidden' }} space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Protocol</label>
+                        <select name="email_protocol" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                            <option value="imap" {{ "selected" if not ec or ec.protocol == "imap" }}>IMAP</option>
+                            <option value="pop3" {{ "selected" if ec and ec.protocol == "pop3" }}>POP3</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Server Host</label>
+                        <input type="text" name="email_server_host" value="{{ ec.server_host if ec else '' }}" placeholder="imap.example.com"
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Port</label>
+                        <input type="number" name="email_server_port" value="{{ ec.server_port if ec else 993 }}"
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                    </div>
+                    <div class="flex items-end pb-2">
+                        <input type="checkbox" id="email_use_ssl" name="email_use_ssl" value="true" {{ "checked" if not ec or ec.use_ssl }}
+                               class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
+                        <label for="email_use_ssl" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Use SSL</label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Username</label>
+                    <input type="text" name="email_username" value="{{ ec.username if ec else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Password {% if ec %}(leave blank to keep current){% endif %}</label>
+                    <input type="password" name="email_password"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Email Address</label>
+                    <input type="email" name="email_address" value="{{ ec.email_address if ec else '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="email_delete_after" name="email_delete_after" value="true" {{ "checked" if ec and ec.delete_after_ingestion }}
+                           class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
+                    <label for="email_delete_after" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Delete emails after ingestion</label>
+                </div>
+                <div class="pt-2">
+                    <button type="button" onclick="testEmailConnection()" class="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium rounded transition-colors">Test Connection</button>
+                    <span id="test-result" class="ml-2 text-xs"></span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="flex gap-3">
+            <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">Save Changes</button>
+            <a href="/events/" class="px-6 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-md transition-colors">Cancel</a>
+        </div>
+    </form>
+
+    <div class="mt-8 pt-6 border-t border-red-200 dark:border-red-800">
+        <h3 class="text-sm font-medium text-red-700 dark:text-red-400 mb-2">Danger Zone</h3>
+        <form method="post" action="/events/{{ event.id }}/delete" onsubmit="return confirm('Delete this event and all its media permanently?')">
+            <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors">Delete Event</button>
+        </form>
+    </div>
+
+    <!-- Gallery link -->
+    <div class="mt-6">
+        <a href="/e/{{ event.id }}/gallery/" class="text-purple-600 dark:text-purple-400 hover:underline text-sm">View Gallery &rarr;</a>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function testEmailConnection() {
+    const resultEl = document.getElementById('test-result');
+    resultEl.textContent = 'Testing...';
+    resultEl.className = 'ml-2 text-xs text-gray-500';
+    const data = {
+        protocol: document.querySelector('[name=email_protocol]').value,
+        server_host: document.querySelector('[name=email_server_host]').value,
+        server_port: document.querySelector('[name=email_server_port]').value,
+        use_ssl: document.querySelector('[name=email_use_ssl]').checked,
+        username: document.querySelector('[name=email_username]').value,
+        password: document.querySelector('[name=email_password]').value,
+    };
+    try {
+        const res = await fetch('/api/events/{{ event.id }}/email-config/test', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data),
+        });
+        const json = await res.json();
+        resultEl.textContent = json.message;
+        resultEl.className = 'ml-2 text-xs ' + (json.success ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400');
+    } catch (e) {
+        resultEl.textContent = 'Request failed: ' + e.message;
+        resultEl.className = 'ml-2 text-xs text-red-600 dark:text-red-400';
+    }
+}
+</script>
+{% endblock %}

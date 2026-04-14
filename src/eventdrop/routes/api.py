@@ -1,12 +1,242 @@
-# REST API routes stub — full implementation pending.
+from fastapi import APIRouter, Depends, Request, HTTPException, BackgroundTasks
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from typing import List
+from pydantic import BaseModel
+import os
 
-from fastapi import APIRouter
-from fastapi.responses import JSONResponse
+from eventdrop.database.session import get_db
+from eventdrop.database.models import Event, MediaFile
+from eventdrop.services import event_service
+from eventdrop.services.media_service import delete_media_file, list_event_media
+from eventdrop.services.archive_service import create_archive, get_archive_by_token
+from eventdrop.storage import get_storage
+from eventdrop.config import settings
 
 router = APIRouter(prefix="/api", tags=["api"])
+
+
+class MediaIdsRequest(BaseModel):
+    media_ids: List[str]
+
+
+async def get_event_and_check_access(event_id: str, request: Request, db: AsyncSession, require_owner: bool = False):
+    """Get event and check access. Returns (event, is_owner, user)."""
+    from eventdrop.auth.dependencies import get_current_user_optional
+    user = await get_current_user_optional(request, db)
+
+    event = await event_service.get_event(db, event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    is_owner = user and (str(user.id) == str(event.owner_id) or user.is_admin)
+
+    if require_owner and not is_owner:
+        raise HTTPException(status_code=403, detail="Owner or admin access required")
+
+    return event, is_owner, user
 
 
 @router.get("/health")
 async def health():
     """Health check endpoint."""
     return JSONResponse({"status": "ok"})
+
+
+@router.post("/events/{event_id}/media/download")
+async def bulk_download(
+    event_id: str,
+    body: MediaIdsRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    event, is_owner, user = await get_event_and_check_access(event_id, request, db)
+
+    if not event.allow_public_download and not is_owner:
+        raise HTTPException(status_code=403, detail="Download not allowed")
+
+    # Validate all media IDs belong to this event
+    result = await db.execute(
+        select(MediaFile).where(
+            MediaFile.id.in_(body.media_ids),
+            MediaFile.event_id == event_id,
+        )
+    )
+    valid_ids = [str(mf.id) for mf in result.scalars().all()]
+    if not valid_ids:
+        raise HTTPException(status_code=400, detail="No valid media files specified")
+
+    storage = get_storage()
+    archive = await create_archive(db, storage, event_id, valid_ids, event.name)
+    await db.commit()
+
+    return JSONResponse({
+        "download_url": f"/api/downloads/{archive.token}",
+        "expires_at": archive.expires_at.isoformat(),
+        "file_count": archive.file_count,
+    })
+
+
+@router.post("/events/{event_id}/media/download-all")
+async def bulk_download_all(
+    event_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    event, is_owner, user = await get_event_and_check_access(event_id, request, db)
+
+    if not event.allow_public_download and not is_owner:
+        raise HTTPException(status_code=403, detail="Download not allowed")
+
+    media_files = await list_event_media(db, event_id)
+    media_ids = [str(mf.id) for mf in media_files]
+
+    if not media_ids:
+        raise HTTPException(status_code=400, detail="No media files in this event")
+
+    storage = get_storage()
+    archive = await create_archive(db, storage, event_id, media_ids, event.name)
+    await db.commit()
+
+    return JSONResponse({
+        "download_url": f"/api/downloads/{archive.token}",
+        "expires_at": archive.expires_at.isoformat(),
+        "file_count": archive.file_count,
+    })
+
+
+@router.get("/downloads/{token}")
+async def download_archive(token: str, db: AsyncSession = Depends(get_db)):
+    from datetime import datetime, timezone
+    archive = await get_archive_by_token(db, token)
+    if not archive:
+        raise HTTPException(status_code=404, detail="Download link not found")
+
+    if archive.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
+        raise HTTPException(status_code=410, detail="Download link has expired")
+
+    if not os.path.exists(archive.file_path):
+        raise HTTPException(status_code=404, detail="Archive file not found")
+
+    archive.downloaded = True
+    await db.commit()
+
+    filename = os.path.basename(archive.file_path)
+    # Remove UUID prefix from filename
+    parts = filename.split("_", 1)
+    if len(parts) > 1:
+        filename = parts[1]
+
+    return FileResponse(
+        archive.file_path,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post("/events/{event_id}/media/delete")
+async def bulk_delete_media(
+    event_id: str,
+    body: MediaIdsRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    event, is_owner, user = await get_event_and_check_access(event_id, request, db, require_owner=True)
+
+    storage = get_storage()
+    deleted = 0
+    errors = []
+
+    for media_id in body.media_ids:
+        try:
+            # Verify belongs to this event
+            result = await db.execute(
+                select(MediaFile).where(MediaFile.id == media_id, MediaFile.event_id == event_id)
+            )
+            mf = result.scalar_one_or_none()
+            if not mf:
+                errors.append({"id": media_id, "error": "Not found"})
+                continue
+            success = await delete_media_file(db, storage, media_id)
+            if success:
+                deleted += 1
+            else:
+                errors.append({"id": media_id, "error": "Delete failed"})
+        except Exception as e:
+            errors.append({"id": media_id, "error": str(e)})
+
+    await db.commit()
+    return JSONResponse({"deleted": deleted, "errors": errors})
+
+
+@router.delete("/events/{event_id}/media/{media_id}")
+async def delete_single_media(
+    event_id: str,
+    media_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    event, is_owner, user = await get_event_and_check_access(event_id, request, db, require_owner=True)
+
+    # Verify belongs to this event
+    result = await db.execute(
+        select(MediaFile).where(MediaFile.id == media_id, MediaFile.event_id == event_id)
+    )
+    mf = result.scalar_one_or_none()
+    if not mf:
+        raise HTTPException(status_code=404)
+
+    storage = get_storage()
+    success = await delete_media_file(db, storage, media_id)
+    await db.commit()
+
+    return JSONResponse({"deleted": success})
+
+
+@router.post("/events/{event_id}/email-config/test")
+async def test_email_connection(
+    event_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Test email connection without saving."""
+    from eventdrop.auth.dependencies import get_current_user_optional
+    user = await get_current_user_optional(request, db)
+    if not user:
+        raise HTTPException(status_code=401)
+
+    body = await request.json()
+    protocol = body.get("protocol", "imap")
+    server_host = body.get("server_host", "")
+    server_port = int(body.get("server_port", 993))
+    use_ssl = body.get("use_ssl", True)
+    username = body.get("username", "")
+    password = body.get("password", "")
+
+    def test_connection():
+        try:
+            if protocol.lower() == "imap":
+                import imaplib
+                if use_ssl:
+                    mail = imaplib.IMAP4_SSL(server_host, server_port)
+                else:
+                    mail = imaplib.IMAP4(server_host, server_port)
+                mail.login(username, password)
+                mail.logout()
+            else:
+                import poplib
+                if use_ssl:
+                    mail = poplib.POP3_SSL(server_host, server_port)
+                else:
+                    mail = poplib.POP3(server_host, server_port)
+                mail.user(username)
+                mail.pass_(password)
+                mail.quit()
+            return {"success": True, "message": "Connection successful!"}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
+    import asyncio
+    result = await asyncio.to_thread(test_connection)
+    return JSONResponse(result)

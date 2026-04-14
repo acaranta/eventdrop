@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Admin — Event: {{ event.name }} — EventDrop{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-4">
+        <a href="/admin/events" class="text-blue-600 dark:text-blue-400 hover:underline text-sm">&larr; Back to Events</a>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{{ event.name }}</h1>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">ID: {{ event.id }} &bull; Owner: {{ event.owner.username if event.owner else event.owner_id }}</p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Media Files</p>
+            <p class="text-2xl font-bold">{{ media_with_urls|length }}</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Gallery Public</p>
+            <p class="text-2xl font-bold">{{ "Yes" if event.is_gallery_public else "No" }}</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Active</p>
+            <p class="text-2xl font-bold">{{ "Yes" if event.is_active else "No" }}</p>
+        </div>
+    </div>
+
+    <div class="flex gap-3 mb-8">
+        <a href="/e/{{ event.id }}/" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors">Upload Page</a>
+        <a href="/e/{{ event.id }}/gallery/" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">Gallery</a>
+        <form method="post" action="/admin/events/{{ event.id }}/delete" class="inline" onsubmit="return confirm('Delete this event and all its media?')">
+            <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors">Delete Event</button>
+        </form>
+    </div>
+
+    {% if media_with_urls %}
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Media Files</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+        {% for item in media_with_urls %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            {% if item.thumb_url %}
+            <img src="{{ item.thumb_url }}" alt="{{ item.media.original_filename }}" class="w-full h-24 object-cover">
+            {% else %}
+            <div class="w-full h-24 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-400">No preview</div>
+            {% endif %}
+            <div class="p-2">
+                <p class="text-xs text-gray-600 dark:text-gray-400 truncate">{{ item.media.original_filename }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

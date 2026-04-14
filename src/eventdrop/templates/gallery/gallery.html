@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Gallery — {{ event.name }} — EventDrop{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-start justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ event.name }}</h1>
+            {% if event.description %}
+            <p class="text-gray-500 dark:text-gray-400 mt-1">{{ event.description }}</p>
+            {% endif %}
+            <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">{{ media_with_urls|length }} file{{ 's' if media_with_urls|length != 1 }}</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+            <a href="/e/{{ event.id }}/" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors">Upload</a>
+            {% if can_download and media_with_urls %}
+            <button onclick="downloadAll()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">Download All</button>
+            {% endif %}
+            {% if is_owner %}
+            <a href="/events/{{ event.id }}/edit" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-md transition-colors">Manage</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if media_with_urls %}
+    <!-- Selection controls (owner only) -->
+    {% if can_delete or can_download %}
+    <div class="flex items-center gap-3 mb-4">
+        <input type="checkbox" id="select-all" class="h-4 w-4 text-blue-600 border-gray-300 rounded" onchange="toggleAll(this.checked)">
+        <label for="select-all" class="text-sm text-gray-700 dark:text-gray-300">Select all</label>
+        {% if can_download %}
+        <button onclick="downloadSelected()" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors ml-2">Download Selected</button>
+        {% endif %}
+        {% if can_delete %}
+        <button onclick="deleteSelected()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors">Delete Selected</button>
+        {% endif %}
+        <span id="selected-count" class="text-xs text-gray-500 dark:text-gray-400"></span>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {% for item in media_with_urls %}
+        <div class="group relative bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden" data-id="{{ item.id }}">
+            {% if can_delete or can_download %}
+            <div class="absolute top-2 left-2 z-10">
+                <input type="checkbox" class="media-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded opacity-0 group-hover:opacity-100 transition-opacity" value="{{ item.id }}" onchange="updateSelectedCount()">
+            </div>
+            {% endif %}
+            <a href="{{ item.url }}" target="_blank" class="block aspect-square overflow-hidden bg-gray-100 dark:bg-gray-700">
+                {% if item.mime_type and item.mime_type.startswith('image/') %}
+                <img src="{{ item.thumb_url }}" alt="{{ item.filename }}" class="w-full h-full object-cover hover:opacity-90 transition-opacity" loading="lazy">
+                {% elif item.mime_type and item.mime_type.startswith('video/') %}
+                <div class="w-full h-full flex items-center justify-center">
+                    <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">{{ item.mime_type }}</div>
+                {% endif %}
+            </a>
+            <div class="p-2">
+                <p class="text-xs text-gray-600 dark:text-gray-400 truncate">{{ item.filename }}</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500">{{ "%.1f"|format(item.size / 1048576) }} MB</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-16">
+        <p class="text-gray-500 dark:text-gray-400 mb-4">No files uploaded yet.</p>
+        <a href="/e/{{ event.id }}/" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">Upload Files</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Download status overlay -->
+<div id="download-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl max-w-sm w-full mx-4">
+        <p class="text-gray-900 dark:text-gray-100 font-medium mb-2" id="download-status">Preparing download...</p>
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div id="download-bar" class="bg-blue-600 h-2 rounded-full animate-pulse" style="width: 30%"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const eventId = "{{ event.id }}";
+
+function toggleAll(checked) {
+    document.querySelectorAll('.media-checkbox').forEach(cb => {
+        cb.checked = checked;
+        cb.classList.toggle('opacity-0', !checked);
+    });
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const count = document.querySelectorAll('.media-checkbox:checked').length;
+    const el = document.getElementById('selected-count');
+    if (el) el.textContent = count > 0 ? `${count} selected` : '';
+}
+
+function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.media-checkbox:checked')).map(cb => cb.value);
+}
+
+async function downloadAll() {
+    await startDownload(`/api/events/${eventId}/media/download-all`, {});
+}
+
+async function downloadSelected() {
+    const ids = getSelectedIds();
+    if (!ids.length) { alert('Select files to download.'); return; }
+    await startDownload(`/api/events/${eventId}/media/download`, { media_ids: ids });
+}
+
+async function startDownload(url, body) {
+    const overlay = document.getElementById('download-overlay');
+    const status = document.getElementById('download-status');
+    overlay.classList.remove('hidden');
+    status.textContent = 'Preparing archive...';
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+            const j = await res.json();
+            throw new Error(j.detail || 'Request failed');
+        }
+        const data = await res.json();
+        status.textContent = `Downloading ${data.file_count} file(s)...`;
+        window.location.href = data.download_url;
+    } catch (e) {
+        alert('Download failed: ' + e.message);
+    } finally {
+        setTimeout(() => overlay.classList.add('hidden'), 2000);
+    }
+}
+
+{% if can_delete %}
+async function deleteSelected() {
+    const ids = getSelectedIds();
+    if (!ids.length) { alert('Select files to delete.'); return; }
+    if (!confirm(`Delete ${ids.length} file(s) permanently?`)) return;
+    const res = await fetch(`/api/events/${eventId}/media/delete`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ media_ids: ids }),
+    });
+    const data = await res.json();
+    if (data.deleted > 0) {
+        ids.forEach(id => {
+            const el = document.querySelector(`[data-id="${id}"]`);
+            if (el) el.remove();
+        });
+        document.getElementById('select-all').checked = false;
+        updateSelectedCount();
+    }
+    if (data.errors && data.errors.length) {
+        alert(`${data.errors.length} file(s) could not be deleted.`);
+    }
+}
+{% endif %}
+</script>
+{% endblock %}
