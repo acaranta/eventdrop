@@ -111,6 +111,27 @@
                class="hidden" onchange="handleFiles(this.files)">
     </div>
 
+    <!-- Message section (shown when identity is set) -->
+    <div id="message-section" class="mt-4 mb-4">
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            Add a message <span class="text-slate-400 font-normal">(optional)</span>
+        </label>
+        <textarea
+            id="upload-message"
+            rows="3"
+            maxlength="500"
+            placeholder="Write a message for these photos... (max 500 chars, emojis welcome 😊)"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+        ></textarea>
+        <div class="flex items-center justify-between mt-2">
+            <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
+                <input type="checkbox" id="message-public" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                <span>Make message visible to everyone</span>
+            </label>
+            <span id="message-char-count" class="text-xs text-slate-400">0/500</span>
+        </div>
+    </div>
+
     <!-- Upload button (manual) -->
     <button type="button"
             onclick="document.getElementById('file-input').click()"
@@ -145,6 +166,27 @@ const eventId = "{{ event.id }}";
 let pendingCount = 0;
 let doneCount = 0;
 let errorCount = 0;
+let batchMessage = '';
+let batchMessagePublic = false;
+let batchStarted = false;
+
+function startBatch() {
+    const msgEl = document.getElementById('upload-message');
+    const pubEl = document.getElementById('message-public');
+    batchMessage = msgEl ? msgEl.value.trim() : '';
+    batchMessagePublic = pubEl ? pubEl.checked : false;
+}
+
+// Character counter for message textarea
+(function() {
+    const msgTextarea = document.getElementById('upload-message');
+    const charCount = document.getElementById('message-char-count');
+    if (msgTextarea && charCount) {
+        msgTextarea.addEventListener('input', () => {
+            charCount.textContent = `${msgTextarea.value.length}/500`;
+        });
+    }
+})();
 
 function handleDragOver(e) {
     e.preventDefault();
@@ -185,6 +227,11 @@ function addFileToQueue(file) {
     const queue = document.getElementById('upload-queue');
     const id = 'file-' + Math.random().toString(36).substr(2, 9);
     pendingCount++;
+    // Capture batch message on first file added in this batch
+    if (!batchStarted) {
+        batchStarted = true;
+        startBatch();
+    }
 
     const item = document.createElement('div');
     item.id = id;
@@ -227,6 +274,8 @@ function addFileToQueue(file) {
 function uploadFile(file, id) {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('upload_message', batchMessage || '');
+    formData.append('message_is_public', batchMessagePublic ? 'true' : 'false');
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `/api/e/${eventId}/upload`);
@@ -306,6 +355,10 @@ function updateSummary() {
         const countEl = document.getElementById('done-count');
         if (summary) summary.classList.remove('hidden');
         if (countEl) countEl.textContent = doneCount;
+        // Reset batch state so a new batch can capture a fresh message
+        batchStarted = false;
+        batchMessage = '';
+        batchMessagePublic = false;
     }
 }
 

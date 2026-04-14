@@ -6,6 +6,9 @@
   const EVENT_ID = window.EVENT_ID;
   const CAN_DOWNLOAD = window.CAN_DOWNLOAD || false;
   const CAN_DELETE = window.CAN_DELETE || false;
+  // Active filter state (set by gallery template)
+  const UPLOADER_FILTER = window.UPLOADER_FILTER || null;
+  const SOURCE_FILTER = window.SOURCE_FILTER || null;
 
   let selectedIds = new Set();
   let lastClickedIndex = null;

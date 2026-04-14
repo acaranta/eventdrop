@@ -54,6 +54,100 @@
     </div>
 
     {% if media_with_urls %}
+
+    {# ---- Filter bar ---- #}
+    {% set filters_active = uploader_filter or source_filter %}
+    <div class="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4">
+        <div class="flex flex-wrap items-center gap-3">
+            {# Uploader dropdown #}
+            {% if contributors %}
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Uploaded by</label>
+                <select onchange="if(this.value){const u=new URL(window.location);u.searchParams.set('uploader',this.value);{% if source_filter %}u.searchParams.set('source','{{ source_filter }}');{% else %}u.searchParams.delete('source');{% endif %}window.location=u;}else{const u=new URL(window.location);u.searchParams.delete('uploader');{% if source_filter %}u.searchParams.set('source','{{ source_filter }}');{% endif %}window.location=u;}"
+                        class="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="" {% if not uploader_filter %}selected{% endif %}>All uploaders</option>
+                    {% for contrib in contributors %}
+                    <option value="{{ contrib.email }}" {% if uploader_filter == contrib.email %}selected{% endif %}>
+                        {{ contrib.email.split('@')[0] }} ({{ contrib.count }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            {# Source toggle #}
+            <div class="flex items-center gap-1">
+                <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1 whitespace-nowrap">Type</span>
+                <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}"
+                   class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if not source_filter %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}">
+                    All
+                </a>
+                <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}source=upload"
+                   class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if source_filter == 'upload' %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}"
+                   title="Web upload">⬆️</a>
+                <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}source=email"
+                   class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if source_filter == 'email' %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}"
+                   title="Email">📧</a>
+            </div>
+
+            {# Clear filters #}
+            {% if filters_active %}
+            <a href="?" class="ml-auto text-xs text-indigo-600 dark:text-indigo-400 hover:underline whitespace-nowrap">
+                Clear filters ✕
+            </a>
+            {% endif %}
+        </div>
+
+        {# Active filter indicator #}
+        {% if filters_active %}
+        <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-1 items-center text-xs text-gray-500 dark:text-gray-400">
+            <span>Showing {{ media_with_urls|length }} item{{ 's' if media_with_urls|length != 1 }} · Filtered by:</span>
+            {% if uploader_filter %}
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full">
+                👤 {{ uploader_filter.split('@')[0] }}
+            </span>
+            {% endif %}
+            {% if source_filter %}
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full">
+                {% if source_filter == 'email' %}📧 Email{% else %}⬆️ Web upload{% endif %}
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {# ---- Contributors panel (collapsible) ---- #}
+    {% if contributors %}
+    <details class="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden group">
+        <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors list-none">
+            <span class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+                </svg>
+                Contributors
+                <span class="text-xs text-gray-400 font-normal">({{ contributors|length }})</span>
+            </span>
+            <svg class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+            </svg>
+        </summary>
+        <div class="px-4 pb-4 pt-1 flex flex-wrap gap-2">
+            {% for contrib in contributors %}
+            <a href="?uploader={{ contrib.email }}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-colors
+                      {% if uploader_filter == contrib.email %}bg-indigo-600 text-white border-indigo-600{% else %}bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500{% endif %}"
+               title="{{ contrib.email }}">
+                <span class="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-300 text-xs font-bold flex-shrink-0">
+                    {{ contrib.email[0]|upper }}
+                </span>
+                <span class="truncate max-w-[120px]">{{ contrib.email.split('@')[0] }}</span>
+                <span class="text-xs {% if uploader_filter == contrib.email %}text-indigo-200{% else %}text-gray-400 dark:text-gray-500{% endif %} ml-0.5">{{ contrib.count }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </details>
+    {% endif %}
+
     <!-- Selection controls (when can_delete or can_download) -->
     {% if can_delete or can_download %}
     <div class="flex items-center gap-3 mb-4 py-2 border-b border-gray-200 dark:border-gray-700">
@@ -69,57 +163,66 @@
     <!-- Media grid -->
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3" id="media-grid">
         {% for item in media_with_urls %}
-        <div class="group relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden aspect-square border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all cursor-pointer"
+        {# Determine display date #}
+        {% set display_date = item.file_datetime or item.uploaded_at %}
+        {# Format size #}
+        {% if item.size %}
+            {% if item.size < 1048576 %}
+                {% set size_str = "%.0f"|format(item.size / 1024) ~ " KB" %}
+            {% else %}
+                {% set size_str = "%.1f"|format(item.size / 1048576) ~ " MB" %}
+            {% endif %}
+        {% else %}
+            {% set size_str = "" %}
+        {% endif %}
+        <div class="group relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all cursor-pointer flex flex-col"
              data-id="{{ item.id }}"
              data-url="{{ item.url }}"
              data-mime="{{ item.mime_type }}"
              data-filename="{{ item.filename }}"
              onclick="handleItemClick(event, this)">
 
-            <!-- Checkbox (always visible on mobile, hover on desktop) -->
-            {% if can_delete or can_download %}
-            <div class="absolute top-2 left-2 z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                <input type="checkbox" class="media-checkbox h-5 w-5 text-indigo-600 border-gray-300 rounded shadow-sm cursor-pointer"
-                       value="{{ item.id }}"
-                       onclick="e => e.stopPropagation()"
-                       onchange="onCheckboxChange(this)">
-            </div>
-            {% endif %}
+            {# Thumbnail area — fixed aspect ratio #}
+            <div class="relative aspect-square overflow-hidden flex-shrink-0">
+                <!-- Checkbox (always visible on mobile, hover on desktop) -->
+                {% if can_delete or can_download %}
+                <div class="absolute top-2 left-2 z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <input type="checkbox" class="media-checkbox h-5 w-5 text-indigo-600 border-gray-300 rounded shadow-sm cursor-pointer"
+                           value="{{ item.id }}"
+                           onclick="e => e.stopPropagation()"
+                           onchange="onCheckboxChange(this)">
+                </div>
+                {% endif %}
 
-            <!-- Source badge -->
-            <div class="absolute top-2 right-2 z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                <span class="text-sm drop-shadow" title="{% if item.source == 'email' %}Sent via email{% else %}Uploaded directly{% endif %}">
-                    {% if item.source == 'email' %}📧{% else %}⬆️{% endif %}
-                </span>
-            </div>
+                <!-- Source badge -->
+                <div class="absolute top-2 right-2 z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <span class="text-sm drop-shadow" title="{% if item.source == 'email' %}Sent via email{% else %}Uploaded directly{% endif %}">
+                        {% if item.source == 'email' %}📧{% else %}⬆️{% endif %}
+                    </span>
+                </div>
 
-            <!-- Media thumbnail -->
-            {% if item.mime_type and item.mime_type.startswith('image/') %}
-            <img src="{{ item.thumb_url }}" alt="{{ item.filename }}"
-                 class="w-full h-full object-cover transition-opacity hover:opacity-90 select-none"
-                 loading="lazy"
-                 draggable="false">
-            {% elif item.mime_type and item.mime_type.startswith('video/') %}
-            <div class="w-full h-full flex flex-col items-center justify-center bg-gray-900 dark:bg-gray-900">
-                <svg class="w-10 h-10 text-white/70 mb-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
-                </svg>
-                <p class="text-xs text-white/50 truncate px-2 max-w-full">{{ item.filename }}</p>
-            </div>
-            {% else %}
-            <div class="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs text-center px-2">
-                {{ item.mime_type or 'File' }}
-            </div>
-            {% endif %}
+                <!-- Media thumbnail -->
+                {% if item.mime_type and item.mime_type.startswith('image/') %}
+                <img src="{{ item.thumb_url }}" alt="{{ item.filename }}"
+                     class="w-full h-full object-cover transition-opacity hover:opacity-90 select-none"
+                     loading="lazy"
+                     draggable="false">
+                {% elif item.mime_type and item.mime_type.startswith('video/') %}
+                <div class="w-full h-full flex flex-col items-center justify-center bg-gray-900 dark:bg-gray-900">
+                    <svg class="w-10 h-10 text-white/70 mb-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+                    </svg>
+                    <p class="text-xs text-white/50 truncate px-2 max-w-full">{{ item.filename }}</p>
+                </div>
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs text-center px-2">
+                    {{ item.mime_type or 'File' }}
+                </div>
+                {% endif %}
 
-            <!-- Hover overlay with info -->
-            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                <p class="text-xs text-white/90 font-medium truncate">{{ item.filename }}</p>
-                <div class="flex items-center justify-between mt-0.5">
-                    <p class="text-xs text-white/60">
-                        {% if item.size %}{{ "%.1f"|format(item.size / 1048576) }} MB{% endif %}
-                    </p>
-                    <div class="flex gap-1.5">
+                <!-- Hover overlay with action buttons -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                    <div class="flex items-center justify-end gap-1.5">
                         {% if can_download %}
                         <a href="{{ item.url }}" download="{{ item.filename }}"
                            onclick="event.stopPropagation()"
@@ -142,10 +245,37 @@
                         {% endif %}
                     </div>
                 </div>
+
+                <!-- Selected overlay -->
+                <div class="media-selected-overlay hidden absolute inset-0 bg-indigo-600/30 ring-2 ring-indigo-500 rounded-xl pointer-events-none"></div>
             </div>
 
-            <!-- Selected overlay -->
-            <div class="media-selected-overlay hidden absolute inset-0 bg-indigo-600/30 ring-2 ring-indigo-500 rounded-xl pointer-events-none"></div>
+            {# Info bar below thumbnail #}
+            <div class="px-2 py-1.5 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 flex-1">
+                <div class="flex items-center justify-between gap-1 mb-0.5">
+                    <p class="text-xs font-medium text-gray-800 dark:text-gray-200 truncate" title="{{ item.filename }}">{{ item.filename }}</p>
+                    <span class="text-xs flex-shrink-0 ml-1" title="{% if item.source == 'email' %}Sent via email{% else %}Uploaded directly{% endif %}">
+                        {% if item.source == 'email' %}📧{% else %}⬆️{% endif %}
+                    </span>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                    {% if size_str %}<span class="flex-shrink-0">{{ size_str }}</span>{% endif %}
+                    {% if display_date %}
+                    <span class="flex-shrink-0">{{ display_date.strftime('%b %-d, %Y') if display_date.strftime is defined else display_date }}</span>
+                    {% endif %}
+                    {% if item.uploader_email %}
+                    <span class="truncate" title="{{ item.uploader_email }}">{{ item.uploader_email.split('@')[0] }}</span>
+                    {% endif %}
+                </div>
+                {# Upload message if visible #}
+                {% if item.upload_message is not none %}
+                <div class="mt-1.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 text-xs text-gray-600 dark:text-gray-300 italic line-clamp-2">
+                    {% if not item.message_is_public %}
+                    <span class="not-italic mr-1" title="Only visible to event owner">🔒</span>
+                    {% endif %}{{ item.upload_message }}
+                </div>
+                {% endif %}
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -290,6 +420,9 @@ const eventId = "{{ event.id }}";
 let pendingDeleteIds = [];
 const canDelete = {{ 'true' if can_delete else 'false' }};
 const canDownload = {{ 'true' if can_download else 'false' }};
+// Active filter state exposed as globals
+window.UPLOADER_FILTER = {{ ('"' ~ uploader_filter ~ '"') if uploader_filter else 'null' }};
+window.SOURCE_FILTER = {{ ('"' ~ source_filter ~ '"') if source_filter else 'null' }};
 
 // Gather all media items
 const allItems = Array.from(document.querySelectorAll('[data-id]'));
