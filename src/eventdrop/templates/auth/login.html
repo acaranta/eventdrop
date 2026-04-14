@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log in — EventDrop</title>
+    <style>
+        body { font-family: sans-serif; max-width: 400px; margin: 80px auto; color: #333; }
+        h1 { text-align: center; margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.25rem; font-weight: bold; }
+        input[type=text], input[type=password] {
+            width: 100%; padding: 0.5rem; margin-bottom: 1rem;
+            border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;
+        }
+        button { width: 100%; padding: 0.75rem; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+        .error { color: #dc2626; margin-bottom: 1rem; text-align: center; }
+        .links { text-align: center; margin-top: 1rem; }
+        a { color: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>Log in</h1>
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+    <form method="post" action="/auth/login">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required autofocus>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit">Log in</button>
+    </form>
+    <div class="links">
+        <a href="/auth/signup">Create an account</a>
+    </div>
+</body>
+</html>

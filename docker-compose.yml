@@ -1,0 +1,26 @@
+services:
+  eventdrop:
+    build: .
+    container_name: eventdrop
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - eventdrop_data:/data
+    environment:
+      EVENTDROP_ADMIN_USERNAME: "admin"
+      EVENTDROP_ADMIN_PASSWORD: "changeme"
+      EVENTDROP_SECRET_KEY: "change-this-to-a-random-secret"
+      EVENTDROP_DB_TYPE: "sqlite"
+      EVENTDROP_DB_PATH: "/data/eventdrop.db"
+      EVENTDROP_STORAGE_TYPE: "local"
+      EVENTDROP_STORAGE_LOCAL_PATH: "/data/media"
+      EVENTDROP_BASE_URL: "http://localhost:8000"
+      EVENTDROP_MAX_UPLOAD_SIZE_MB: "500"
+      EVENTDROP_EMAIL_INGESTION_ENABLED: "true"
+      EVENTDROP_EMAIL_POLL_INTERVAL_SECONDS: "120"
+      EVENTDROP_ARCHIVE_TEMP_PATH: "/data/tmp"
+      EVENTDROP_ARCHIVE_EXPIRY_MINUTES: "15"
+
+volumes:
+  eventdrop_data:
