@@ -1,4 +1,6 @@
 import uuid
+import secrets
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Request, Form, Depends
@@ -49,13 +51,22 @@ async def login_get(
     db: AsyncSession = Depends(get_db),
 ):
     """Display the login page. Redirect to /events/ if already logged in."""
+    from eventdrop.services.settings_service import is_registration_allowed
     user = await get_current_user_optional(request, db)
     if user is not None:
         return RedirectResponse(url="/events/", status_code=302)
+    reg_allowed = await is_registration_allowed(db)
     return templates.TemplateResponse(
         request,
         "auth/login.html",
-        _ctx(request, user=None, error=None, oidc_enabled=settings.is_oidc_configured()),
+        _ctx(
+            request,
+            user=None,
+            error=None,
+            oidc_enabled=settings.is_oidc_configured(),
+            registration_allowed=reg_allowed,
+            smtp_enabled=settings.is_smtp_configured(),
+        ),
     )
 
 
@@ -89,12 +100,14 @@ async def login_post(
 
 
 @router.get("/signup", response_class=HTMLResponse)
-async def signup_get(request: Request):
+async def signup_get(request: Request, db: AsyncSession = Depends(get_db)):
     """Display the sign-up page."""
+    from eventdrop.services.settings_service import is_registration_allowed
+    reg_allowed = await is_registration_allowed(db)
     return templates.TemplateResponse(
         request,
         "auth/signup.html",
-        _ctx(request, user=None, error=None),
+        _ctx(request, user=None, error=None, registration_allowed=reg_allowed),
     )
 
 
@@ -108,6 +121,15 @@ async def signup_post(
     db: AsyncSession = Depends(get_db),
 ):
     """Process sign-up form submission."""
+    from eventdrop.services.settings_service import is_registration_allowed
+    if not (await is_registration_allowed(db)):
+        return templates.TemplateResponse(
+            request,
+            "auth/signup.html",
+            _ctx(request, user=None, error="Registration is currently disabled."),
+            status_code=403,
+        )
+
     # Validate password length
     if len(password) < 8:
         return templates.TemplateResponse(
@@ -158,6 +180,105 @@ async def logout(request: Request):
     """Clear the user session and redirect to home."""
     request.session.clear()
     return RedirectResponse(url="/", status_code=302)
+
+
+@router.get("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_get(request: Request):
+    return templates.TemplateResponse(request, "auth/forgot_password.html", _ctx(request))
+
+
+@router.post("/forgot-password")
+async def forgot_password_post(
+    request: Request,
+    email: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    from eventdrop.database.models import PasswordResetToken
+    from eventdrop.services.email_service import send_password_reset_email
+
+    # Always show success to prevent email enumeration
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if user and settings.is_smtp_configured():
+        token = secrets.token_urlsafe(48)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        reset_token = PasswordResetToken(
+            user_id=user.id,
+            token=token,
+            expires_at=expires_at,
+        )
+        db.add(reset_token)
+        await db.commit()
+        reset_url = f"{settings.base_url}/auth/reset-password?token={token}"
+        await send_password_reset_email(user.email, reset_url)
+
+    _set_flash(request, "If that email is registered, a reset link has been sent.", "info")
+    return RedirectResponse(url="/auth/forgot-password", status_code=302)
+
+
+@router.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_get(request: Request, token: str = ""):
+    if not token:
+        return RedirectResponse(url="/auth/login", status_code=302)
+    return templates.TemplateResponse(request, "auth/reset_password.html", _ctx(request, token=token))
+
+
+@router.post("/reset-password")
+async def reset_password_post(
+    request: Request,
+    token: str = Form(...),
+    password: str = Form(...),
+    confirm_password: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    from eventdrop.database.models import PasswordResetToken
+
+    if len(password) < 8:
+        return templates.TemplateResponse(
+            request,
+            "auth/reset_password.html",
+            _ctx(request, token=token, error="Password must be at least 8 characters."),
+            status_code=400,
+        )
+    if password != confirm_password:
+        return templates.TemplateResponse(
+            request,
+            "auth/reset_password.html",
+            _ctx(request, token=token, error="Passwords do not match."),
+            status_code=400,
+        )
+
+    result = await db.execute(
+        select(PasswordResetToken)
+        .where(PasswordResetToken.token == token, PasswordResetToken.used == False)  # noqa: E712
+    )
+    reset_token = result.scalar_one_or_none()
+
+    if not reset_token or reset_token.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        return templates.TemplateResponse(
+            request,
+            "auth/reset_password.html",
+            _ctx(request, token=token, error="This reset link is invalid or has expired."),
+            status_code=400,
+        )
+
+    result = await db.execute(select(User).where(User.id == reset_token.user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        return templates.TemplateResponse(
+            request,
+            "auth/reset_password.html",
+            _ctx(request, token=token, error="User not found."),
+            status_code=400,
+        )
+
+    user.password_hash = hash_password(password)
+    reset_token.used = True
+    await db.commit()
+
+    _set_flash(request, "Password reset successfully. Please log in.", "success")
+    return RedirectResponse(url="/auth/login", status_code=302)
 
 
 # ---- OIDC routes (only registered if OIDC is configured) ----

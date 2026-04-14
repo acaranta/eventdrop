@@ -42,6 +42,18 @@ class Settings(BaseSettings):
     archive_temp_path: str = "/data/tmp"
     archive_expiry_minutes: int = 15
 
+    # Admin email
+    admin_email: str = ""
+
+    # SMTP for sending emails
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    smtp_tls: bool = True   # STARTTLS on port 587
+    smtp_ssl: bool = False  # SSL on port 465
+
     # App
     base_url: str = "http://localhost:8000"
     max_upload_size_mb: int = 500
@@ -60,6 +72,9 @@ class Settings(BaseSettings):
             and bool(self.oidc_client_id)
             and bool(self.oidc_client_secret)
         )
+
+    def is_smtp_configured(self) -> bool:
+        return bool(self.smtp_host and self.smtp_from)
 
 
 settings = Settings()
