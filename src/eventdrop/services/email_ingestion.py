@@ -31,6 +31,18 @@ def decrypt_password(encrypted_password: str) -> str:
     return f.decrypt(encrypted_password.encode()).decode()
 
 
+def _decode_header_value(raw: str) -> str:
+    """Decode an RFC2047-encoded email header value to a plain string."""
+    from email.header import decode_header
+    parts = []
+    for data, charset in decode_header(raw or ""):
+        if isinstance(data, bytes):
+            parts.append(data.decode(charset or "utf-8", errors="replace"))
+        else:
+            parts.append(str(data))
+    return " ".join(parts).strip()
+
+
 def get_filename_from_part(part) -> Optional[str]:
     filename = part.get_filename()
     if filename:
@@ -102,9 +114,10 @@ async def poll_imap(config: EventEmailConfig, db: AsyncSession):
             raw = msg_data[0][1]
             msg = message_from_bytes(raw)
             sender = email.utils.parseaddr(msg.get("From", ""))[1] or "unknown@unknown.com"
+            subject = _decode_header_value(msg.get("Subject", ""))
             attachments = extract_media_from_email(msg)
             for att in attachments:
-                results.append({"sender": sender, "attachment": att})
+                results.append({"sender": sender, "attachment": att, "subject": subject})
             if config.delete_after_ingestion:
                 mail.store(num, "+FLAGS", "\\Deleted")
             else:
@@ -127,6 +140,8 @@ async def poll_imap(config: EventEmailConfig, db: AsyncSession):
                 file_data=item["attachment"]["data"],
                 mime_type=item["attachment"]["mime_type"],
                 source="email",
+                upload_message=item.get("subject") or None,
+                message_is_public=False,
             )
             media_count += 1
         except Exception as e:
@@ -178,9 +193,10 @@ async def poll_pop3(config: EventEmailConfig, db: AsyncSession):
             raw = b"\n".join(lines)
             msg = message_from_bytes(raw)
             sender = email.utils.parseaddr(msg.get("From", ""))[1] or "unknown@unknown.com"
+            subject = _decode_header_value(msg.get("Subject", ""))
             attachments = extract_media_from_email(msg)
             for att in attachments:
-                results.append({"sender": sender, "attachment": att, "uid": uid})
+                results.append({"sender": sender, "attachment": att, "uid": uid, "subject": subject})
             if config.delete_after_ingestion:
                 to_delete.append(msg_num)
 
@@ -206,6 +222,8 @@ async def poll_pop3(config: EventEmailConfig, db: AsyncSession):
                 file_data=item["attachment"]["data"],
                 mime_type=item["attachment"]["mime_type"],
                 source="email",
+                upload_message=item.get("subject") or None,
+                message_is_public=False,
             )
             media_count += 1
         except Exception as e:
