@@ -1,110 +1,433 @@
 {% extends "base.html" %}
 {% block title %}Gallery — {{ event.name }} — EventDrop{% endblock %}
+
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex items-start justify-between mb-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
+            {% if user %}
+            <a href="/events/" class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 mb-2 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+                </svg>
+                My Events
+            </a>
+            {% endif %}
             <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ event.name }}</h1>
             {% if event.description %}
-            <p class="text-gray-500 dark:text-gray-400 mt-1">{{ event.description }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ event.description }}</p>
             {% endif %}
-            <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">{{ media_with_urls|length }} file{{ 's' if media_with_urls|length != 1 }}</p>
+            <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                <span id="total-count">{{ media_with_urls|length }}</span> file{{ 's' if media_with_urls|length != 1 }}
+            </p>
         </div>
-        <div class="flex gap-2 flex-wrap">
-            <a href="/e/{{ event.id }}/" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors">Upload</a>
+
+        <div class="flex flex-wrap gap-2">
+            <a href="/e/{{ event.id }}/"
+               class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                </svg>
+                Upload More
+            </a>
             {% if can_download and media_with_urls %}
-            <button onclick="downloadAll()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">Download All</button>
+            <button type="button" onclick="downloadAll()"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                </svg>
+                Download All
+            </button>
             {% endif %}
             {% if is_owner %}
-            <a href="/events/{{ event.id }}/edit" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-md transition-colors">Manage</a>
+            <a href="/events/{{ event.id }}/edit"
+               class="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Manage
+            </a>
             {% endif %}
         </div>
     </div>
 
     {% if media_with_urls %}
-    <!-- Selection controls (owner only) -->
+    <!-- Selection controls (when can_delete or can_download) -->
     {% if can_delete or can_download %}
-    <div class="flex items-center gap-3 mb-4">
-        <input type="checkbox" id="select-all" class="h-4 w-4 text-blue-600 border-gray-300 rounded" onchange="toggleAll(this.checked)">
-        <label for="select-all" class="text-sm text-gray-700 dark:text-gray-300">Select all</label>
-        {% if can_download %}
-        <button onclick="downloadSelected()" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors ml-2">Download Selected</button>
-        {% endif %}
-        {% if can_delete %}
-        <button onclick="deleteSelected()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors">Delete Selected</button>
-        {% endif %}
-        <span id="selected-count" class="text-xs text-gray-500 dark:text-gray-400"></span>
+    <div class="flex items-center gap-3 mb-4 py-2 border-b border-gray-200 dark:border-gray-700">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" id="select-all" class="h-4 w-4 text-indigo-600 border-gray-300 rounded cursor-pointer"
+                   onchange="toggleAll(this.checked)">
+            <span class="text-sm text-gray-700 dark:text-gray-300">Select all</span>
+        </label>
+        <span id="selected-label" class="text-xs text-gray-400 dark:text-gray-500 ml-1"></span>
     </div>
     {% endif %}
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+    <!-- Media grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3" id="media-grid">
         {% for item in media_with_urls %}
-        <div class="group relative bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden" data-id="{{ item.id }}">
+        <div class="group relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden aspect-square border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all cursor-pointer"
+             data-id="{{ item.id }}"
+             data-url="{{ item.url }}"
+             data-mime="{{ item.mime_type }}"
+             data-filename="{{ item.filename }}"
+             onclick="handleItemClick(event, this)">
+
+            <!-- Checkbox (always visible on mobile, hover on desktop) -->
             {% if can_delete or can_download %}
-            <div class="absolute top-2 left-2 z-10">
-                <input type="checkbox" class="media-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded opacity-0 group-hover:opacity-100 transition-opacity" value="{{ item.id }}" onchange="updateSelectedCount()">
+            <div class="absolute top-2 left-2 z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <input type="checkbox" class="media-checkbox h-5 w-5 text-indigo-600 border-gray-300 rounded shadow-sm cursor-pointer"
+                       value="{{ item.id }}"
+                       onclick="e => e.stopPropagation()"
+                       onchange="onCheckboxChange(this)">
             </div>
             {% endif %}
-            <a href="{{ item.url }}" target="_blank" class="block aspect-square overflow-hidden bg-gray-100 dark:bg-gray-700">
-                {% if item.mime_type and item.mime_type.startswith('image/') %}
-                <img src="{{ item.thumb_url }}" alt="{{ item.filename }}" class="w-full h-full object-cover hover:opacity-90 transition-opacity" loading="lazy">
-                {% elif item.mime_type and item.mime_type.startswith('video/') %}
-                <div class="w-full h-full flex items-center justify-center">
-                    <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                {% else %}
-                <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">{{ item.mime_type }}</div>
-                {% endif %}
-            </a>
-            <div class="p-2">
-                <p class="text-xs text-gray-600 dark:text-gray-400 truncate">{{ item.filename }}</p>
-                <p class="text-xs text-gray-400 dark:text-gray-500">{{ "%.1f"|format(item.size / 1048576) }} MB</p>
+
+            <!-- Source badge -->
+            <div class="absolute top-2 right-2 z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <span class="text-sm drop-shadow" title="{% if item.source == 'email' %}Sent via email{% else %}Uploaded directly{% endif %}">
+                    {% if item.source == 'email' %}📧{% else %}⬆️{% endif %}
+                </span>
             </div>
+
+            <!-- Media thumbnail -->
+            {% if item.mime_type and item.mime_type.startswith('image/') %}
+            <img src="{{ item.thumb_url }}" alt="{{ item.filename }}"
+                 class="w-full h-full object-cover transition-opacity hover:opacity-90 select-none"
+                 loading="lazy"
+                 draggable="false">
+            {% elif item.mime_type and item.mime_type.startswith('video/') %}
+            <div class="w-full h-full flex flex-col items-center justify-center bg-gray-900 dark:bg-gray-900">
+                <svg class="w-10 h-10 text-white/70 mb-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+                </svg>
+                <p class="text-xs text-white/50 truncate px-2 max-w-full">{{ item.filename }}</p>
+            </div>
+            {% else %}
+            <div class="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs text-center px-2">
+                {{ item.mime_type or 'File' }}
+            </div>
+            {% endif %}
+
+            <!-- Hover overlay with info -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                <p class="text-xs text-white/90 font-medium truncate">{{ item.filename }}</p>
+                <div class="flex items-center justify-between mt-0.5">
+                    <p class="text-xs text-white/60">
+                        {% if item.size %}{{ "%.1f"|format(item.size / 1048576) }} MB{% endif %}
+                    </p>
+                    <div class="flex gap-1.5">
+                        {% if can_download %}
+                        <a href="{{ item.url }}" download="{{ item.filename }}"
+                           onclick="event.stopPropagation()"
+                           class="p-1 rounded bg-white/20 hover:bg-white/40 transition-colors"
+                           title="Download">
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                            </svg>
+                        </a>
+                        {% endif %}
+                        {% if can_delete %}
+                        <button type="button"
+                                onclick="deleteSingle('{{ item.id }}', event)"
+                                class="p-1 rounded bg-red-500/70 hover:bg-red-500/90 transition-colors"
+                                title="Delete">
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                            </svg>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected overlay -->
+            <div class="media-selected-overlay hidden absolute inset-0 bg-indigo-600/30 ring-2 ring-indigo-500 rounded-xl pointer-events-none"></div>
         </div>
         {% endfor %}
     </div>
+
     {% else %}
-    <div class="text-center py-16">
-        <p class="text-gray-500 dark:text-gray-400 mb-4">No files uploaded yet.</p>
-        <a href="/e/{{ event.id }}/" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">Upload Files</a>
+    <!-- Empty state -->
+    <div class="text-center py-20">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 mb-6">
+            <svg class="w-9 h-9 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21h18"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No files yet</h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-6">Be the first to upload photos or videos to this event!</p>
+        <a href="/e/{{ event.id }}/"
+           class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold rounded-lg transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+            </svg>
+            Upload Files
+        </a>
     </div>
     {% endif %}
 </div>
 
-<!-- Download status overlay -->
-<div id="download-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl max-w-sm w-full mx-4">
-        <p class="text-gray-900 dark:text-gray-100 font-medium mb-2" id="download-status">Preparing download...</p>
-        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div id="download-bar" class="bg-blue-600 h-2 rounded-full animate-pulse" style="width: 30%"></div>
+<!-- Sticky selection toolbar (appears when items selected) -->
+{% if can_delete or can_download %}
+<div id="selection-toolbar"
+     class="hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-2xl px-4 py-3 sm:px-6">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+        <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <span id="toolbar-count">0</span> selected
+        </p>
+        <div class="flex gap-2">
+            {% if can_download %}
+            <button type="button" onclick="downloadSelected()"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                </svg>
+                Download
+            </button>
+            {% endif %}
+            {% if can_delete %}
+            <button type="button" onclick="openDeleteModal()"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                </svg>
+                Delete
+            </button>
+            {% endif %}
+            <button type="button" onclick="clearSelection()"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Delete confirmation modal -->
+{% if can_delete %}
+<div id="delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+    <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-sm p-6">
+        <div class="text-center mb-4">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/40 mb-3">
+                <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                </svg>
+            </div>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Delete Files</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="delete-modal-message">
+                Delete selected files permanently?
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <button type="button" onclick="closeDeleteModal()"
+                    class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors text-sm">
+                Cancel
+            </button>
+            <button type="button" id="delete-confirm-btn" onclick="executeDelete()"
+                    class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors text-sm">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Lightbox -->
+<div id="lightbox" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+     onclick="closeLightbox()">
+    <button onclick="closeLightbox(); event.stopPropagation()"
+            class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+    </button>
+    <button onclick="prevItem(); event.stopPropagation()"
+            class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
+        </svg>
+    </button>
+    <button onclick="nextItem(); event.stopPropagation()"
+            class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+        </svg>
+    </button>
+    <div id="lightbox-content" class="max-w-5xl max-h-full w-full flex items-center justify-center" onclick="event.stopPropagation()">
+        <img id="lightbox-img" src="" alt="" class="hidden max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl select-none">
+        <video id="lightbox-video" controls class="hidden max-w-full max-h-[85vh] rounded-lg shadow-2xl"></video>
+    </div>
+    <div class="absolute bottom-4 left-0 right-0 text-center">
+        <p id="lightbox-filename" class="text-sm text-white/70"></p>
+    </div>
+</div>
+
+<!-- Download spinner overlay -->
+<div id="download-overlay" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-200 dark:border-gray-700 max-w-sm w-full mx-4 text-center">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 mb-4">
+            <svg class="w-6 h-6 text-green-600 dark:text-green-400 animate-bounce" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+            </svg>
+        </div>
+        <p class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1" id="download-status">Preparing download…</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">This may take a moment for large archives</p>
+        <div class="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div id="download-bar" class="bg-green-500 h-2 rounded-full animate-pulse" style="width: 40%"></div>
         </div>
     </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script>
 const eventId = "{{ event.id }}";
+let pendingDeleteIds = [];
+const canDelete = {{ 'true' if can_delete else 'false' }};
+const canDownload = {{ 'true' if can_download else 'false' }};
 
+// Gather all media items
+const allItems = Array.from(document.querySelectorAll('[data-id]'));
+let currentLightboxIndex = -1;
+
+// ---- Selection ----
 function toggleAll(checked) {
     document.querySelectorAll('.media-checkbox').forEach(cb => {
         cb.checked = checked;
-        cb.classList.toggle('opacity-0', !checked);
+        updateItemHighlight(cb);
     });
-    updateSelectedCount();
+    updateToolbar();
 }
 
-function updateSelectedCount() {
+function onCheckboxChange(cb) {
+    updateItemHighlight(cb);
+    updateToolbar();
+
+    // Update select-all state
+    const all = document.querySelectorAll('.media-checkbox');
+    const checked = document.querySelectorAll('.media-checkbox:checked');
+    const selectAll = document.getElementById('select-all');
+    if (selectAll) {
+        selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+        selectAll.checked = checked.length === all.length && all.length > 0;
+    }
+}
+
+function updateItemHighlight(cb) {
+    const item = cb.closest('[data-id]');
+    if (!item) return;
+    const overlay = item.querySelector('.media-selected-overlay');
+    if (overlay) overlay.classList.toggle('hidden', !cb.checked);
+    if (cb.checked) {
+        cb.classList.add('opacity-100');
+        cb.classList.remove('sm:opacity-0', 'sm:group-hover:opacity-100');
+    } else {
+        cb.classList.remove('opacity-100');
+        cb.classList.add('sm:opacity-0', 'sm:group-hover:opacity-100');
+    }
+}
+
+function updateToolbar() {
     const count = document.querySelectorAll('.media-checkbox:checked').length;
-    const el = document.getElementById('selected-count');
-    if (el) el.textContent = count > 0 ? `${count} selected` : '';
+    const toolbar = document.getElementById('selection-toolbar');
+    const countEl = document.getElementById('toolbar-count');
+    const labelEl = document.getElementById('selected-label');
+    if (toolbar) toolbar.classList.toggle('hidden', count === 0);
+    if (countEl) countEl.textContent = count;
+    if (labelEl) labelEl.textContent = count > 0 ? `${count} selected` : '';
+}
+
+function clearSelection() {
+    document.querySelectorAll('.media-checkbox').forEach(cb => {
+        cb.checked = false;
+        updateItemHighlight(cb);
+    });
+    const selectAll = document.getElementById('select-all');
+    if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+    updateToolbar();
 }
 
 function getSelectedIds() {
     return Array.from(document.querySelectorAll('.media-checkbox:checked')).map(cb => cb.value);
 }
 
+// ---- Item click (lightbox or select) ----
+function handleItemClick(e, item) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'A' || e.target.tagName === 'BUTTON' ||
+        e.target.closest('a') || e.target.closest('button')) {
+        return;
+    }
+    const mime = item.dataset.mime || '';
+    const url = item.dataset.url;
+    const filename = item.dataset.filename;
+    const idx = allItems.indexOf(item);
+    openLightbox(idx, url, mime, filename);
+}
+
+// ---- Lightbox ----
+function openLightbox(idx, url, mime, filename) {
+    currentLightboxIndex = idx;
+    const lb = document.getElementById('lightbox');
+    const img = document.getElementById('lightbox-img');
+    const video = document.getElementById('lightbox-video');
+    const fnEl = document.getElementById('lightbox-filename');
+
+    if (mime.startsWith('video/')) {
+        img.classList.add('hidden');
+        video.classList.remove('hidden');
+        video.src = url;
+        video.play().catch(() => {});
+    } else {
+        video.classList.add('hidden');
+        video.pause();
+        video.src = '';
+        img.classList.remove('hidden');
+        img.src = url;
+    }
+
+    if (fnEl) fnEl.textContent = filename;
+    lb.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+    const lb = document.getElementById('lightbox');
+    const video = document.getElementById('lightbox-video');
+    lb.classList.add('hidden');
+    video.pause();
+    video.src = '';
+    document.body.style.overflow = '';
+}
+
+function prevItem() {
+    if (currentLightboxIndex <= 0) return;
+    currentLightboxIndex--;
+    const item = allItems[currentLightboxIndex];
+    openLightbox(currentLightboxIndex, item.dataset.url, item.dataset.mime || '', item.dataset.filename);
+}
+
+function nextItem() {
+    if (currentLightboxIndex >= allItems.length - 1) return;
+    currentLightboxIndex++;
+    const item = allItems[currentLightboxIndex];
+    openLightbox(currentLightboxIndex, item.dataset.url, item.dataset.mime || '', item.dataset.filename);
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+    const lb = document.getElementById('lightbox');
+    if (lb.classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') prevItem();
+    if (e.key === 'ArrowRight') nextItem();
+});
+
+// ---- Download ----
 async function downloadAll() {
     await startDownload(`/api/events/${eventId}/media/download-all`, {});
 }
@@ -119,7 +442,7 @@ async function startDownload(url, body) {
     const overlay = document.getElementById('download-overlay');
     const status = document.getElementById('download-status');
     overlay.classList.remove('hidden');
-    status.textContent = 'Preparing archive...';
+    status.textContent = 'Preparing archive…';
     try {
         const res = await fetch(url, {
             method: 'POST',
@@ -127,42 +450,85 @@ async function startDownload(url, body) {
             body: JSON.stringify(body),
         });
         if (!res.ok) {
-            const j = await res.json();
+            const j = await res.json().catch(() => ({}));
             throw new Error(j.detail || 'Request failed');
         }
         const data = await res.json();
-        status.textContent = `Downloading ${data.file_count} file(s)...`;
+        status.textContent = `Downloading ${data.file_count || ''} file(s)…`;
         window.location.href = data.download_url;
+        setTimeout(() => overlay.classList.add('hidden'), 3000);
     } catch (e) {
+        overlay.classList.add('hidden');
         alert('Download failed: ' + e.message);
-    } finally {
-        setTimeout(() => overlay.classList.add('hidden'), 2000);
     }
 }
 
-{% if can_delete %}
-async function deleteSelected() {
-    const ids = getSelectedIds();
-    if (!ids.length) { alert('Select files to delete.'); return; }
-    if (!confirm(`Delete ${ids.length} file(s) permanently?`)) return;
-    const res = await fetch(`/api/events/${eventId}/media/delete`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ media_ids: ids }),
-    });
-    const data = await res.json();
-    if (data.deleted > 0) {
-        ids.forEach(id => {
-            const el = document.querySelector(`[data-id="${id}"]`);
-            if (el) el.remove();
+// ---- Delete ----
+function openDeleteModal(ids) {
+    const idsToDelete = ids || getSelectedIds();
+    if (!idsToDelete.length) return;
+    pendingDeleteIds = idsToDelete;
+    const msg = document.getElementById('delete-modal-message');
+    if (msg) msg.textContent = `Delete ${idsToDelete.length} file(s) permanently? This cannot be undone.`;
+    document.getElementById('delete-modal')?.classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal')?.classList.add('hidden');
+    pendingDeleteIds = [];
+}
+
+async function executeDelete() {
+    if (!pendingDeleteIds.length) return;
+    const btn = document.getElementById('delete-confirm-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+
+    try {
+        const res = await fetch(`/api/events/${eventId}/media/delete`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ media_ids: pendingDeleteIds }),
         });
-        document.getElementById('select-all').checked = false;
-        updateSelectedCount();
-    }
-    if (data.errors && data.errors.length) {
-        alert(`${data.errors.length} file(s) could not be deleted.`);
+        const data = await res.json();
+
+        if (data.deleted > 0) {
+            pendingDeleteIds.forEach(id => {
+                const el = document.querySelector(`[data-id="${id}"]`);
+                if (el) el.remove();
+            });
+            // Remove from allItems tracking
+            pendingDeleteIds.forEach(id => {
+                const idx = allItems.findIndex(el => el.dataset.id === id);
+                if (idx !== -1) allItems.splice(idx, 1);
+            });
+
+            // Update counts
+            const remaining = document.querySelectorAll('[data-id]').length;
+            const tc = document.getElementById('total-count');
+            if (tc) tc.textContent = remaining;
+
+            clearSelection();
+        }
+
+        if (data.errors && data.errors.length) {
+            alert(`${data.errors.length} file(s) could not be deleted.`);
+        }
+    } catch (e) {
+        alert('Delete failed: ' + e.message);
+    } finally {
+        closeDeleteModal();
+        if (btn) { btn.disabled = false; btn.textContent = 'Delete'; }
     }
 }
-{% endif %}
+
+function deleteSingle(id, e) {
+    if (e) e.stopPropagation();
+    openDeleteModal([id]);
+}
+
+// Close modals on Escape
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeDeleteModal();
+});
 </script>
 {% endblock %}

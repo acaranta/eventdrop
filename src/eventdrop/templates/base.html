@@ -39,17 +39,17 @@
                 <!-- Brand -->
                 <div class="flex items-center">
                     <a href="/" class="flex items-center space-x-2">
-                        <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">EventDrop</span>
+                        <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">EventDrop</span>
                     </a>
                     {% if user %}
                     <div class="hidden sm:ml-8 sm:flex sm:space-x-4">
                         <a href="/events/"
-                           class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                           class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             My Events
                         </a>
                         {% if user.is_admin %}
                         <a href="/admin/"
-                           class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                           class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             Admin
                         </a>
                         {% endif %}
@@ -76,7 +76,7 @@
                     <div class="relative" id="user-menu-container">
                         <button id="user-menu-btn"
                                 class="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                            <span class="w-7 h-7 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
+                            <span class="w-7 h-7 rounded-full bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center text-white text-xs font-bold">
                                 {{ user.username[0]|upper }}
                             </span>
                             <span class="hidden sm:block">{{ user.username }}</span>
@@ -111,11 +111,11 @@
                     {% else %}
                     <!-- Login / Signup buttons -->
                     <a href="/auth/login"
-                       class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md transition-colors">
+                       class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md transition-colors">
                         Log in
                     </a>
                     <a href="/auth/signup"
-                       class="text-sm font-medium bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors">
+                       class="text-sm font-medium bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white px-4 py-2 rounded-md transition-colors">
                         Sign up
                     </a>
                     {% endif %}
@@ -155,7 +155,7 @@
                     Log in
                 </a>
                 <a href="/auth/signup"
-                   class="block px-3 py-2 rounded-md text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                   class="block px-3 py-2 rounded-md text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700">
                     Sign up
                 </a>
                 {% endif %}
@@ -166,9 +166,17 @@
     <!-- Flash messages -->
     {% if flash %}
     <div id="flash-message"
-         class="{% if flash.type == 'success' %}bg-green-50 dark:bg-green-900/30 border-green-400 text-green-800 dark:text-green-200{% else %}bg-red-50 dark:bg-red-900/30 border-red-400 text-red-800 dark:text-red-200{% endif %} border-l-4 px-6 py-3 flex justify-between items-center">
-        <span>{{ flash.message }}</span>
-        <button onclick="document.getElementById('flash-message').remove()" class="ml-4 opacity-60 hover:opacity-100 text-lg leading-none">&times;</button>
+         class="border-l-4 px-6 py-3 flex justify-between items-center
+         {% if flash.type == 'success' %}bg-green-50 dark:bg-green-900/30 border-green-400 text-green-800 dark:text-green-200
+         {% elif flash.type == 'warning' %}bg-amber-50 dark:bg-amber-900/30 border-amber-400 text-amber-800 dark:text-amber-200
+         {% elif flash.type == 'info' %}bg-blue-50 dark:bg-blue-900/30 border-blue-400 text-blue-800 dark:text-blue-200
+         {% else %}bg-red-50 dark:bg-red-900/30 border-red-400 text-red-800 dark:text-red-200{% endif %}">
+        <div class="flex items-center gap-2">
+            {% if flash.type == 'success' %}<span class="text-base">✅</span>{% elif flash.type == 'warning' %}<span class="text-base">⚠️</span>{% elif flash.type == 'info' %}<span class="text-base">ℹ️</span>{% else %}<span class="text-base">❌</span>{% endif %}
+            <span class="text-sm font-medium">{{ flash.message }}</span>
+        </div>
+        <button onclick="document.getElementById('flash-message').remove()"
+                class="ml-4 opacity-60 hover:opacity-100 text-lg leading-none flex-shrink-0">&times;</button>
     </div>
     {% endif %}
 

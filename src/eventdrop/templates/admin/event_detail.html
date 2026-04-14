@@ -1,52 +1,294 @@
 {% extends "base.html" %}
-{% block title %}Admin — Event: {{ event.name }} — EventDrop{% endblock %}
+{% block title %}Admin — {{ event.name }} — EventDrop{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-4">
-        <a href="/admin/events" class="text-blue-600 dark:text-blue-400 hover:underline text-sm">&larr; Back to Events</a>
-    </div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{{ event.name }}</h1>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">ID: {{ event.id }} &bull; Owner: {{ event.owner.username if event.owner else event.owner_id }}</p>
-
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400">Media Files</p>
-            <p class="text-2xl font-bold">{{ media_with_urls|length }}</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400">Gallery Public</p>
-            <p class="text-2xl font-bold">{{ "Yes" if event.is_gallery_public else "No" }}</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400">Active</p>
-            <p class="text-2xl font-bold">{{ "Yes" if event.is_active else "No" }}</p>
-        </div>
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <a href="/admin/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Dashboard</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+        </svg>
+        <a href="/admin/events" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Events</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+        </svg>
+        <span class="text-gray-700 dark:text-gray-200 font-medium">{{ event.name }}</span>
     </div>
 
-    <div class="flex gap-3 mb-8">
-        <a href="/e/{{ event.id }}/" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors">Upload Page</a>
-        <a href="/e/{{ event.id }}/gallery/" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">Gallery</a>
-        <form method="post" action="/admin/events/{{ event.id }}/delete" class="inline" onsubmit="return confirm('Delete this event and all its media?')">
-            <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors">Delete Event</button>
-        </form>
-    </div>
-
-    {% if media_with_urls %}
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Media Files</h2>
-    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
-        {% for item in media_with_urls %}
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            {% if item.thumb_url %}
-            <img src="{{ item.thumb_url }}" alt="{{ item.media.original_filename }}" class="w-full h-24 object-cover">
-            {% else %}
-            <div class="w-full h-24 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-400">No preview</div>
-            {% endif %}
-            <div class="p-2">
-                <p class="text-xs text-gray-600 dark:text-gray-400 truncate">{{ item.media.original_filename }}</p>
+    <!-- Event header -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ event.name }}</h1>
+                    {% if event.is_active %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">Active</span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">Closed</span>
+                    {% endif %}
+                    {% if event.is_gallery_public %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">Public</span>
+                    {% endif %}
+                </div>
+                {% if event.description %}
+                <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">{{ event.description }}</p>
+                {% endif %}
+                <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                    <span>ID: <code class="font-mono text-gray-700 dark:text-gray-200">{{ event.id }}</code></span>
+                    <span>Owner: <strong class="text-gray-700 dark:text-gray-200">{{ event.owner.username if event.owner else event.owner_id }}</strong></span>
+                    {% if event.created_at %}
+                    <span>Created: {{ event.created_at.strftime("%Y-%m-%d %H:%M") }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex gap-2 flex-shrink-0">
+                <a href="/e/{{ event.id }}/"
+                   class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                    </svg>
+                    Upload
+                </a>
+                <a href="/e/{{ event.id }}/gallery/"
+                   class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21h18"/>
+                    </svg>
+                    Gallery
+                </a>
+                <form method="post" action="/admin/events/{{ event.id }}/delete" class="inline"
+                      onsubmit="return confirm('Delete event &quot;{{ event.name }}&quot; and all its media permanently?')">
+                    <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                        </svg>
+                        Delete Event
+                    </button>
+                </form>
             </div>
         </div>
-        {% endfor %}
+    </div>
+
+    <!-- Stats row -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Media Files</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ media_with_urls|length }}</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Gallery</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ "Public" if event.is_gallery_public else "Private" }}</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Downloads</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ "Allowed" if event.allow_public_download else "Restricted" }}</p>
+        </div>
+    </div>
+
+    <!-- Email config section -->
+    {% if event.email_config %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+            <span class="text-lg">📧</span>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Email Ingestion</h2>
+            {% if event.email_config.is_enabled %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">Enabled</span>
+            {% else %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">Disabled</span>
+            {% endif %}
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Protocol</p>
+                <p class="font-medium text-gray-900 dark:text-gray-100 uppercase">{{ event.email_config.protocol }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Server</p>
+                <p class="font-medium text-gray-900 dark:text-gray-100">{{ event.email_config.server_host }}:{{ event.email_config.server_port }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Email Address</p>
+                <p class="font-medium text-gray-900 dark:text-gray-100">{{ event.email_config.email_address or event.email_config.username }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Last Poll</p>
+                {% if event.email_config.last_poll_at %}
+                <p class="font-medium text-gray-900 dark:text-gray-100">{{ event.email_config.last_poll_at.strftime("%Y-%m-%d %H:%M") }}</p>
+                {% if event.email_config.last_poll_status == 'ok' or event.email_config.last_poll_status == 'success' %}
+                <span class="text-xs text-green-600 dark:text-green-400">✅ {{ event.email_config.last_poll_status }}</span>
+                {% elif event.email_config.last_poll_status %}
+                <span class="text-xs text-red-600 dark:text-red-400">❌ {{ event.email_config.last_poll_status }}</span>
+                {% endif %}
+                {% else %}
+                <p class="text-gray-400 dark:text-gray-500">Never polled</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Media grid -->
+    {% if media_with_urls %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">
+                Media Files
+                <span class="ml-1.5 text-sm font-normal text-gray-400">({{ media_with_urls|length }})</span>
+            </h2>
+            <button id="bulk-delete-btn"
+                    onclick="bulkDelete()"
+                    class="hidden items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                Delete Selected (<span id="selected-count">0</span>)
+            </button>
+        </div>
+
+        <!-- Select all bar -->
+        <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700/30 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+            <input type="checkbox" id="select-all" class="h-4 w-4 text-indigo-600 border-gray-300 rounded cursor-pointer"
+                   onchange="toggleAll(this.checked)">
+            <label for="select-all" class="text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">Select all</label>
+        </div>
+
+        <div class="p-4">
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                {% for item in media_with_urls %}
+                <div class="group relative bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors"
+                     data-id="{{ item.media.id }}">
+                    <!-- Checkbox -->
+                    <div class="absolute top-1.5 left-1.5 z-10">
+                        <input type="checkbox" class="media-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded shadow cursor-pointer
+                               opacity-0 group-hover:opacity-100 transition-opacity"
+                               value="{{ item.media.id }}" onchange="updateCount()">
+                    </div>
+
+                    <!-- Source badge -->
+                    <div class="absolute top-1.5 right-1.5 z-10">
+                        {% if item.media.source == 'email' %}
+                        <span class="text-sm" title="Via email">📧</span>
+                        {% else %}
+                        <span class="text-sm" title="Via upload">⬆️</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Thumbnail -->
+                    <a href="{{ item.url }}" target="_blank" class="block aspect-square overflow-hidden bg-gray-200 dark:bg-gray-600">
+                        {% if item.thumb_url %}
+                        <img src="{{ item.thumb_url }}" alt="{{ item.media.original_filename }}"
+                             class="w-full h-full object-cover hover:opacity-90 transition-opacity" loading="lazy">
+                        {% elif item.media.mime_type and item.media.mime_type.startswith('video/') %}
+                        <div class="w-full h-full flex items-center justify-center">
+                            <svg class="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs text-center px-1">
+                            {{ item.media.mime_type or 'File' }}
+                        </div>
+                        {% endif %}
+                    </a>
+
+                    <!-- Info -->
+                    <div class="p-1.5">
+                        <p class="text-xs text-gray-700 dark:text-gray-300 truncate font-medium" title="{{ item.media.original_filename }}">
+                            {{ item.media.original_filename }}
+                        </p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">
+                            {% if item.media.file_size %}{{ "%.1f"|format(item.media.file_size / 1048576) }} MB{% endif %}
+                        </p>
+                        {% if item.media.uploader_email %}
+                        <p class="text-xs text-gray-400 dark:text-gray-500 truncate" title="{{ item.media.uploader_email }}">
+                            {{ item.media.uploader_email }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-12 text-center">
+        <svg class="mx-auto w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21h18"/>
+        </svg>
+        <p class="text-gray-500 dark:text-gray-400">No media files uploaded yet.</p>
+        <a href="/e/{{ event.id }}/"
+           class="mt-4 inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+            Go to upload page →
+        </a>
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const eventId = "{{ event.id }}";
+
+function toggleAll(checked) {
+    document.querySelectorAll('.media-checkbox').forEach(cb => {
+        cb.checked = checked;
+        cb.closest('[data-id]').classList.toggle('ring-2', checked);
+        cb.closest('[data-id]').classList.toggle('ring-indigo-400', checked);
+        cb.classList.toggle('opacity-100', checked);
+        cb.classList.toggle('opacity-0', !checked);
+    });
+    updateCount();
+}
+
+function updateCount() {
+    const checked = document.querySelectorAll('.media-checkbox:checked');
+    const btn = document.getElementById('bulk-delete-btn');
+    const countEl = document.getElementById('selected-count');
+    if (btn) {
+        if (checked.length > 0) {
+            btn.classList.remove('hidden');
+            btn.classList.add('inline-flex');
+        } else {
+            btn.classList.add('hidden');
+            btn.classList.remove('inline-flex');
+        }
+    }
+    if (countEl) countEl.textContent = checked.length;
+
+    // Update select-all state
+    const all = document.querySelectorAll('.media-checkbox');
+    const selectAll = document.getElementById('select-all');
+    if (selectAll) {
+        selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+        selectAll.checked = checked.length === all.length && all.length > 0;
+    }
+}
+
+async function bulkDelete() {
+    const ids = Array.from(document.querySelectorAll('.media-checkbox:checked')).map(cb => cb.value);
+    if (!ids.length) return;
+    if (!confirm(`Delete ${ids.length} file(s) permanently? This cannot be undone.`)) return;
+
+    try {
+        const res = await fetch(`/api/events/${eventId}/media/delete`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ media_ids: ids }),
+        });
+        const data = await res.json();
+        if (data.deleted > 0) {
+            ids.forEach(id => {
+                const el = document.querySelector(`[data-id="${id}"]`);
+                if (el) el.remove();
+            });
+            document.getElementById('select-all').checked = false;
+            updateCount();
+        }
+        if (data.errors && data.errors.length) {
+            alert(`${data.errors.length} file(s) could not be deleted.`);
+        }
+    } catch (e) {
+        alert('Delete failed: ' + e.message);
+    }
+}
+</script>
 {% endblock %}

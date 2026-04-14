@@ -1,168 +1,298 @@
 {% extends "base.html" %}
-{% block title %}Edit Event — {{ event.name }} — EventDrop{% endblock %}
+{% block title %}Edit: {{ event.name }} — EventDrop{% endblock %}
+
 {% block content %}
 <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-4">
-        <a href="/events/" class="text-blue-600 dark:text-blue-400 hover:underline text-sm">&larr; My Events</a>
-    </div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Edit Event</h1>
-
-    <!-- Upload link & QR -->
-    <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
-        <p class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">Upload Link</p>
-        <div class="flex items-center gap-2">
-            <input type="text" value="{{ upload_url }}" readonly
-                   class="flex-1 px-3 py-1.5 text-sm border border-blue-300 dark:border-blue-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                   onclick="this.select()">
-            <a href="/events/{{ event.id }}/qr.png" download class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors">Download QR</a>
-        </div>
-        {% if qr_code %}
-        <img src="{{ qr_code }}" alt="QR Code" class="mt-3 w-32 h-32">
-        {% endif %}
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <a href="/events/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">My Events</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+        </svg>
+        <span class="text-gray-700 dark:text-gray-200 font-medium truncate max-w-[200px]">{{ event.name }}</span>
     </div>
 
-    <!-- Stats -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Event</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-mono">{{ event.name }}</p>
+    </div>
+
+    <!-- Stats bar -->
     {% if stats %}
     <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400">Files</p>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Files</p>
             <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ stats.file_count }}</p>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-            <p class="text-xs text-gray-500 dark:text-gray-400">Total Size</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ "%.1f"|format(stats.total_size / 1048576) }} MB</p>
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Total Size</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100" id="total-size-display">
+                {{ "%.1f"|format(stats.total_size / 1048576) }} MB
+            </p>
         </div>
     </div>
     {% endif %}
 
-    <form method="post" action="/events/{{ event.id }}/edit" class="space-y-6">
-        <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Event Name <span class="text-red-500">*</span></label>
-            <input type="text" id="name" name="name" required value="{{ event.name }}"
-                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-
-        <div>
-            <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-            <textarea id="description" name="description" rows="3"
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ event.description or "" }}</textarea>
-        </div>
-
-        <div class="space-y-3">
-            <div class="flex items-center">
-                <input type="checkbox" id="is_active" name="is_active" value="true" {{ "checked" if event.is_active }}
-                       class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
-                <label for="is_active" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Event active (accept uploads)</label>
+    <!-- Upload link & QR section -->
+    <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl p-5 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+            <div>
+                <p class="text-sm font-semibold text-indigo-800 dark:text-indigo-200 mb-0.5">Upload Link</p>
+                <p class="text-xs text-indigo-600 dark:text-indigo-300">Share this link with your guests to collect photos</p>
             </div>
-            <div class="flex items-center">
-                <input type="checkbox" id="is_gallery_public" name="is_gallery_public" value="true" {{ "checked" if event.is_gallery_public }}
-                       class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
-                <label for="is_gallery_public" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Public gallery</label>
-            </div>
-            <div class="flex items-center">
-                <input type="checkbox" id="allow_public_download" name="allow_public_download" value="true" {{ "checked" if event.allow_public_download }}
-                       class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
-                <label for="allow_public_download" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Allow public download</label>
+            <div class="flex gap-2 flex-shrink-0">
+                <a href="/e/{{ event.id }}/" target="_blank"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40 hover:bg-indigo-200 dark:hover:bg-indigo-900/60 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+                    </svg>
+                    Open
+                </a>
+                <a href="/e/{{ event.id }}/gallery/" target="_blank"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21h18"/>
+                    </svg>
+                    Gallery
+                </a>
             </div>
         </div>
 
-        {% if settings.email_ingestion_enabled %}
-        {% set ec = event.email_config %}
-        <div class="border border-gray-200 dark:border-gray-700 rounded-md p-4">
-            <div class="flex items-center mb-3">
-                <input type="checkbox" id="email_enabled" name="email_enabled" value="true" {{ "checked" if ec and ec.is_enabled }}
-                       class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded"
-                       onchange="document.getElementById('email-config').classList.toggle('hidden', !this.checked)">
-                <label for="email_enabled" class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Enable email ingestion</label>
-            </div>
-            <div id="email-config" class="{{ '' if ec and ec.is_enabled else 'hidden' }} space-y-3">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Protocol</label>
-                        <select name="email_protocol" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
-                            <option value="imap" {{ "selected" if not ec or ec.protocol == "imap" }}>IMAP</option>
-                            <option value="pop3" {{ "selected" if ec and ec.protocol == "pop3" }}>POP3</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Server Host</label>
-                        <input type="text" name="email_server_host" value="{{ ec.server_host if ec else '' }}" placeholder="imap.example.com"
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Port</label>
-                        <input type="number" name="email_server_port" value="{{ ec.server_port if ec else 993 }}"
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
-                    </div>
-                    <div class="flex items-end pb-2">
-                        <input type="checkbox" id="email_use_ssl" name="email_use_ssl" value="true" {{ "checked" if not ec or ec.use_ssl }}
-                               class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
-                        <label for="email_use_ssl" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Use SSL</label>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Username</label>
-                    <input type="text" name="email_username" value="{{ ec.username if ec else '' }}"
-                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Password {% if ec %}(leave blank to keep current){% endif %}</label>
-                    <input type="password" name="email_password"
-                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Email Address</label>
-                    <input type="email" name="email_address" value="{{ ec.email_address if ec else '' }}"
-                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
-                </div>
-                <div class="flex items-center">
-                    <input type="checkbox" id="email_delete_after" name="email_delete_after" value="true" {{ "checked" if ec and ec.delete_after_ingestion }}
-                           class="h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
-                    <label for="email_delete_after" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Delete emails after ingestion</label>
-                </div>
-                <div class="pt-2">
-                    <button type="button" onclick="testEmailConnection()" class="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium rounded transition-colors">Test Connection</button>
-                    <span id="test-result" class="ml-2 text-xs"></span>
-                </div>
+        <!-- URL copy row -->
+        <div class="flex items-center gap-2 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 rounded-lg px-3 py-2 mb-4">
+            <input type="text" id="upload-url" value="{{ upload_url }}" readonly
+                   class="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-300 font-mono focus:outline-none cursor-text"
+                   onclick="this.select()">
+            <button type="button" onclick="copyUploadUrl()"
+                    class="flex-shrink-0 p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded transition-colors"
+                    title="Copy link">
+                <svg id="copy-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- QR code -->
+        {% if qr_code %}
+        <div class="flex items-start gap-4">
+            <img src="{{ qr_code }}" alt="QR Code for upload page"
+                 class="w-28 h-28 rounded-lg border-2 border-white dark:border-gray-700 shadow-sm bg-white p-1">
+            <div>
+                <p class="text-sm font-medium text-indigo-800 dark:text-indigo-200 mb-1">QR Code</p>
+                <p class="text-xs text-indigo-600 dark:text-indigo-300 mb-3">Guests can scan this to open the upload page</p>
+                <a href="/events/{{ event.id }}/qr.png" download="event-{{ event.id }}-qr.png"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40 hover:bg-indigo-200 dark:hover:bg-indigo-900/60 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                    </svg>
+                    Download QR
+                </a>
             </div>
         </div>
         {% endif %}
+    </div>
 
+    <!-- Edit form -->
+    <form method="post" action="/events/{{ event.id }}/edit" class="space-y-6">
+        <!-- Basic info -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 space-y-5">
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Event Details</h2>
+
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Event Name <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="name" name="name" required value="{{ event.name }}"
+                       class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+            </div>
+
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Description <span class="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <textarea id="description" name="description" rows="3"
+                          class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm resize-none">{{ event.description or "" }}</textarea>
+            </div>
+        </div>
+
+        <!-- Settings toggles -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 space-y-4">
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Settings</h2>
+
+            <!-- Active toggle -->
+            <label class="flex items-center justify-between gap-4 cursor-pointer py-1">
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Event Active</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Accept new uploads when active</p>
+                </div>
+                <div class="relative flex-shrink-0">
+                    <input type="checkbox" id="is_active" name="is_active" value="true"
+                           {% if event.is_active %}checked{% endif %}
+                           class="sr-only peer">
+                    <div class="w-10 h-6 bg-gray-200 dark:bg-gray-600 peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-500 rounded-full transition-colors"></div>
+                    <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+                </div>
+            </label>
+
+            <div class="border-t border-gray-100 dark:border-gray-700"></div>
+
+            <!-- Public gallery toggle -->
+            <label class="flex items-center justify-between gap-4 cursor-pointer py-1">
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Public Gallery</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Anyone with the link can view the gallery</p>
+                </div>
+                <div class="relative flex-shrink-0">
+                    <input type="checkbox" id="is_gallery_public" name="is_gallery_public" value="true"
+                           {% if event.is_gallery_public %}checked{% endif %}
+                           class="sr-only peer">
+                    <div class="w-10 h-6 bg-gray-200 dark:bg-gray-600 peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-500 rounded-full transition-colors"></div>
+                    <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+                </div>
+            </label>
+
+            <div class="border-t border-gray-100 dark:border-gray-700"></div>
+
+            <!-- Allow download toggle -->
+            <label class="flex items-center justify-between gap-4 cursor-pointer py-1">
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Allow Public Download</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Gallery visitors can download photos and videos</p>
+                </div>
+                <div class="relative flex-shrink-0">
+                    <input type="checkbox" id="allow_public_download" name="allow_public_download" value="true"
+                           {% if event.allow_public_download %}checked{% endif %}
+                           class="sr-only peer">
+                    <div class="w-10 h-6 bg-gray-200 dark:bg-gray-600 peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-500 rounded-full transition-colors"></div>
+                    <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+                </div>
+            </label>
+        </div>
+
+        <!-- Email ingestion partial (with event context) -->
+        {% include "events/partials/email_config_form.html" %}
+
+        <!-- Save actions -->
         <div class="flex gap-3">
-            <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">Save Changes</button>
-            <a href="/events/" class="px-6 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-md transition-colors">Cancel</a>
+            <button type="submit"
+                    class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold rounded-lg shadow-sm transition-colors text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                </svg>
+                Save Changes
+            </button>
+            <a href="/events/"
+               class="inline-flex items-center justify-center px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors text-sm">
+                Cancel
+            </a>
         </div>
     </form>
 
-    <div class="mt-8 pt-6 border-t border-red-200 dark:border-red-800">
-        <h3 class="text-sm font-medium text-red-700 dark:text-red-400 mb-2">Danger Zone</h3>
-        <form method="post" action="/events/{{ event.id }}/delete" onsubmit="return confirm('Delete this event and all its media permanently?')">
-            <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors">Delete Event</button>
-        </form>
+    <!-- Danger zone -->
+    <div class="mt-10 pt-6 border-t border-red-200 dark:border-red-900">
+        <div class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">Danger Zone</h3>
+            <p class="text-xs text-red-600 dark:text-red-500 mb-4">
+                Deleting this event will permanently remove all uploaded media. This action cannot be undone.
+            </p>
+            <button type="button" onclick="confirmDelete()"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                </svg>
+                Delete This Event
+            </button>
+        </div>
+
+        <!-- Hidden delete form -->
+        <form id="delete-form" method="post" action="/events/{{ event.id }}/delete" class="hidden"></form>
     </div>
 
-    <!-- Gallery link -->
-    <div class="mt-6">
-        <a href="/e/{{ event.id }}/gallery/" class="text-purple-600 dark:text-purple-400 hover:underline text-sm">View Gallery &rarr;</a>
+    <!-- Delete confirmation modal -->
+    <div id="delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+        <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Delete Event</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">This action cannot be undone</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                Are you sure you want to delete <strong class="text-gray-900 dark:text-gray-100">{{ event.name }}</strong>?
+                All media files will be permanently deleted.
+            </p>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeDeleteModal()"
+                        class="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors text-sm">
+                    Cancel
+                </button>
+                <button type="button" onclick="document.getElementById('delete-form').submit()"
+                        class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors text-sm">
+                    Delete Event
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script>
+function toggleEmailSection() {
+    const body = document.getElementById('email-section-body');
+    const chevron = document.getElementById('email-chevron');
+    if (body) body.classList.toggle('hidden');
+    if (chevron) chevron.classList.toggle('rotate-180');
+}
+
+function toggleEmailFields(enabled) {
+    const fields = document.getElementById('email-fields');
+    if (fields) {
+        if (enabled) {
+            fields.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+            fields.classList.add('opacity-50', 'pointer-events-none');
+        }
+    }
+}
+
+function updateDefaultPort() {
+    const protocol = document.getElementById('email_protocol');
+    const ssl = document.getElementById('email_use_ssl');
+    const port = document.getElementById('email_server_port');
+    if (!protocol || !ssl || !port) return;
+    const defaults = {
+        imap: { ssl: 993, plain: 143 },
+        pop3: { ssl: 995, plain: 110 },
+    };
+    const proto = protocol.value;
+    const useSSL = ssl.checked;
+    if (defaults[proto]) {
+        port.value = useSSL ? defaults[proto].ssl : defaults[proto].plain;
+    }
+}
+
 async function testEmailConnection() {
     const resultEl = document.getElementById('test-result');
-    resultEl.textContent = 'Testing...';
-    resultEl.className = 'ml-2 text-xs text-gray-500';
+    if (!resultEl) return;
+    resultEl.textContent = 'Testing…';
+    resultEl.className = 'text-sm text-gray-500 dark:text-gray-400';
+
     const data = {
-        protocol: document.querySelector('[name=email_protocol]').value,
-        server_host: document.querySelector('[name=email_server_host]').value,
-        server_port: document.querySelector('[name=email_server_port]').value,
-        use_ssl: document.querySelector('[name=email_use_ssl]').checked,
-        username: document.querySelector('[name=email_username]').value,
-        password: document.querySelector('[name=email_password]').value,
+        protocol: document.querySelector('[name=email_protocol]')?.value,
+        server_host: document.querySelector('[name=email_server_host]')?.value,
+        server_port: document.querySelector('[name=email_server_port]')?.value,
+        use_ssl: document.querySelector('[name=email_use_ssl]')?.checked,
+        username: document.querySelector('[name=email_username]')?.value,
+        password: document.querySelector('[name=email_password]')?.value,
     };
+
     try {
         const res = await fetch('/api/events/{{ event.id }}/email-config/test', {
             method: 'POST',
@@ -170,12 +300,41 @@ async function testEmailConnection() {
             body: JSON.stringify(data),
         });
         const json = await res.json();
-        resultEl.textContent = json.message;
-        resultEl.className = 'ml-2 text-xs ' + (json.success ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400');
+        resultEl.textContent = json.message || (json.success ? 'Connected!' : 'Failed');
+        resultEl.className = 'text-sm font-medium ' + (json.success
+            ? 'text-green-600 dark:text-green-400'
+            : 'text-red-600 dark:text-red-400');
     } catch (e) {
         resultEl.textContent = 'Request failed: ' + e.message;
-        resultEl.className = 'ml-2 text-xs text-red-600 dark:text-red-400';
+        resultEl.className = 'text-sm text-red-600 dark:text-red-400';
     }
 }
+
+function copyUploadUrl() {
+    const url = document.getElementById('upload-url')?.value;
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+        const icon = document.getElementById('copy-icon');
+        if (icon) {
+            icon.outerHTML = '<svg id="copy-icon" class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>';
+            setTimeout(() => {
+                document.getElementById('copy-icon').outerHTML = '<svg id="copy-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"/></svg>';
+            }, 2000);
+        }
+    }).catch(() => prompt('Copy this link:', url));
+}
+
+function confirmDelete() {
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+}
+
+// Close modal on escape
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeDeleteModal();
+});
 </script>
 {% endblock %}
