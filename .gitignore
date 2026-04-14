@@ -1,2 +1,3 @@
 docker-compose.yml
 eventdrop.db
+__pycache__
