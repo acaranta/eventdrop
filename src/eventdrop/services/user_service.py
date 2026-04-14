@@ -55,3 +55,12 @@ async def delete_user(db: AsyncSession, user_id: str) -> bool:
         await db.flush()
         return True
     return False
+
+
+async def get_admin_email(db: AsyncSession) -> str:
+    """Return the email address of the first admin user, or empty string if none set."""
+    result = await db.execute(
+        select(User).where(User.is_admin == True).order_by(User.created_at).limit(1)  # noqa: E712
+    )
+    admin = result.scalar_one_or_none()
+    return (admin.email or "") if admin else ""

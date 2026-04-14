@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from pathlib import Path
+from typing import Optional
 
 from eventdrop.auth.dependencies import get_current_user
 from eventdrop.auth.passwords import hash_password, verify_password
@@ -58,4 +59,22 @@ async def change_password(
     user.password_hash = hash_password(new_password)
     await db.commit()
     request.session["flash"] = {"type": "success", "message": "Password changed successfully."}
+    return RedirectResponse(url="/account/", status_code=303)
+
+
+@router.post("/update-email")
+async def update_email(
+    request: Request,
+    email: Optional[str] = Form(None),
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    email = email.strip() if email else ""
+    if email and "@" not in email:
+        request.session["flash"] = {"type": "error", "message": "Invalid email address."}
+        return RedirectResponse(url="/account/", status_code=303)
+
+    user.email = email or None
+    await db.commit()
+    request.session["flash"] = {"type": "success", "message": "Email address updated."}
     return RedirectResponse(url="/account/", status_code=303)
