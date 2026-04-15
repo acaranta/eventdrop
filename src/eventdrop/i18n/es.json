@@ -268,7 +268,8 @@
     "field_confirm_password": "Confirmar nueva contraseña",
     "password_placeholder": "Mínimo 8 caracteres",
     "confirm_placeholder": "Repite tu nueva contraseña",
-    "update_password_btn": "Actualizar contraseña"
+    "update_password_btn": "Actualizar contraseña",
+    "email_oidc_hint": "Gestionado por su proveedor SSO. Vuelva a iniciar sesión para actualizar."
   },
   "admin": {
     "dash": {

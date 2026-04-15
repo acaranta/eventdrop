@@ -268,7 +268,8 @@
     "field_confirm_password": "Neues Passwort bestätigen",
     "password_placeholder": "Mindestens 8 Zeichen",
     "confirm_placeholder": "Neues Passwort wiederholen",
-    "update_password_btn": "Passwort aktualisieren"
+    "update_password_btn": "Passwort aktualisieren",
+    "email_oidc_hint": "Wird von Ihrem SSO-Anbieter verwaltet. Melden Sie sich erneut an, um es zu aktualisieren."
   },
   "admin": {
     "dash": {

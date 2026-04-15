@@ -308,7 +308,7 @@ if settings.is_oidc_configured():
                 user = result.scalar_one_or_none()
 
             if user is None:
-                # Create a new user with a unique username
+                # Create a new user with a unique username derived from preferred_username
                 base_username = preferred_username
                 username = base_username
                 counter = 1
@@ -331,7 +331,11 @@ if settings.is_oidc_configured():
                 # Link existing email user to OIDC subject
                 user.oidc_subject = subject
 
-            await db.flush()
+        # Always sync email from OIDC provider on each login
+        if email and user.email != email:
+            user.email = email
+
+        await db.flush()
 
         request.session["user_id"] = str(user.id)
         # No flash needed for OIDC login

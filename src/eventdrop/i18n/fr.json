@@ -268,7 +268,8 @@
     "field_confirm_password": "Confirmer le nouveau mot de passe",
     "password_placeholder": "Au moins 8 caractères",
     "confirm_placeholder": "Répétez votre nouveau mot de passe",
-    "update_password_btn": "Mettre à jour le mot de passe"
+    "update_password_btn": "Mettre à jour le mot de passe",
+    "email_oidc_hint": "Géré par votre fournisseur SSO. Reconnectez-vous pour mettre à jour."
   },
   "admin": {
     "dash": {

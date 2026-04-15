@@ -29,6 +29,14 @@
             {% endif %}
         </dl>
 
+        {% if user.oidc_subject %}
+        <!-- OIDC user — email is read-only, managed by the SSO provider -->
+        <div class="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-1">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("account.field_email") }}</p>
+            <p class="text-sm text-gray-900 dark:text-gray-100">{{ user.email or '—' }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500">{{ t("account.email_oidc_hint") }}</p>
+        </div>
+        {% else %}
         <form method="post" action="/account/update-email" class="space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -49,6 +57,7 @@
                 </button>
             </div>
         </form>
+        {% endif %}
     </div>
 
     <!-- Change password card -->

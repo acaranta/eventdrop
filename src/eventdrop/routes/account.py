@@ -59,6 +59,10 @@ async def update_email(
     user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    if user.oidc_subject:
+        request.session["flash"] = {"type": "error", "message": "Email is managed by your SSO provider and cannot be changed here."}
+        return RedirectResponse(url="/account/", status_code=303)
+
     email = email.strip() if email else ""
     if email and "@" not in email:
         request.session["flash"] = {"type": "error", "key": "flash.email_invalid"}
