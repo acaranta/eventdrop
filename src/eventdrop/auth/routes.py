@@ -1,7 +1,10 @@
+import logging
 import uuid
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -287,9 +290,10 @@ if settings.is_oidc_configured():
             return RedirectResponse(url="/auth/login", status_code=302)
 
         userinfo = token.get("userinfo") or await oauth.oidc.userinfo(token=token)
+        logger.debug("OIDC userinfo claims: %s", list(userinfo.keys()) if userinfo else None)
 
         subject = userinfo.get("sub")
-        email = userinfo.get("email", "")
+        email = userinfo.get("email") or ""
         preferred_username = (
             userinfo.get("preferred_username")
             or userinfo.get("name")
@@ -331,9 +335,18 @@ if settings.is_oidc_configured():
                 # Link existing email user to OIDC subject
                 user.oidc_subject = subject
 
-        # Always sync email from OIDC provider on each login
+        # Always sync email and username from OIDC provider on each login
         if email and user.email != email:
             user.email = email
+
+        # Sync username if the provider gives us something better than the raw subject
+        if preferred_username and preferred_username != subject and user.username != preferred_username:
+            # Only update if the target username is not already taken by a different user
+            result = await db.execute(
+                select(User).where(User.username == preferred_username, User.id != user.id)
+            )
+            if result.scalar_one_or_none() is None:
+                user.username = preferred_username
 
         await db.flush()
 
