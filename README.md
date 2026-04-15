@@ -501,6 +501,45 @@ EventDrop uses the `/.well-known/openid-configuration` discovery document from `
 
 OIDC and local username/password authentication can coexist. When OIDC is configured, an SSO login button appears on the login page alongside the standard form.
 
+#### Authelia
+
+EventDrop works with [Authelia](https://www.authelia.com/) 4.38+. Add a client entry to your Authelia `configuration.yml`:
+
+```yaml
+identity_providers:
+  oidc:
+    clients:
+      - client_id: eventdrop
+        client_name: EventDrop
+        # Generate with: authelia crypto hash generate pbkdf2 --random --random.length 64
+        client_secret: '$pbkdf2-sha512$310000$<your-generated-hash>'
+        public: false
+        authorization_policy: one_factor  # change to two_factor to require MFA
+        redirect_uris:
+          - https://eventdrop.example.com/auth/oidc/callback
+        scopes:
+          - openid
+          - profile
+          - email
+        response_types:
+          - code
+        grant_types:
+          - authorization_code
+        token_endpoint_auth_method: client_secret_basic
+```
+
+Then configure EventDrop to point at your Authelia instance:
+
+```dotenv
+EVENTDROP_OIDC_ENABLED=true
+# Authelia issuer base URL — no path suffix needed, discovery is automatic
+EVENTDROP_OIDC_PROVIDER_URL=https://auth.example.com
+EVENTDROP_OIDC_CLIENT_ID=eventdrop
+# Plain-text secret here; Authelia stores only the hash above
+EVENTDROP_OIDC_CLIENT_SECRET=your-plain-text-secret
+EVENTDROP_OIDC_DISPLAY_NAME=Login with Authelia
+```
+
 ### Admin Access
 
 Users with `is_admin=true` can access the `/admin/` panel. Admin status can be toggled from the admin users page. The initial admin user created from the environment variables always has admin access.
