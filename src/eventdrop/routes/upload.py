@@ -49,7 +49,10 @@ async def upload_page(event_id: str, request: Request, db: AsyncSession = Depend
             uploader_email = session.email
 
     from eventdrop.auth.dependencies import get_current_user_optional
+    from eventdrop.utils.qrcode import generate_qr_code_base64
     auth_user = await get_current_user_optional(request, db)
+    upload_url = f"{settings.base_url}/e/{event.id}/"
+    qr_code = generate_qr_code_base64(upload_url)
 
     return templates.TemplateResponse(request, "upload/upload.html", {
         "user": auth_user,
@@ -57,6 +60,8 @@ async def upload_page(event_id: str, request: Request, db: AsyncSession = Depend
         "event": event,
         "uploader_email": uploader_email,
         "email_ingestion_address": email_ingestion_address,
+        "qr_code": qr_code,
+        "upload_url": upload_url,
     })
 
 

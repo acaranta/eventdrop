@@ -11,6 +11,29 @@
         {% endif %}
     </div>
 
+    <!-- QR code: shown only on non-touch / desktop (hidden on mobile via JS) -->
+    {% if qr_code %}
+    <div id="qr-share-block" class="hidden flex-col items-center gap-3 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl p-5 mb-6 text-center">
+        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Open on your phone</p>
+        <img src="data:image/png;base64,{{ qr_code }}"
+             alt="QR code for {{ upload_url }}"
+             class="w-36 h-36 rounded-lg">
+        <p class="text-xs text-gray-500 dark:text-gray-400 max-w-[200px]">
+            Scan this code with your phone camera to upload directly from your device
+        </p>
+    </div>
+    <script>
+    // Show QR block only on non-touch (desktop) devices
+    if (!('ontouchstart' in window) && !navigator.maxTouchPoints) {
+        const qrBlock = document.getElementById('qr-share-block');
+        if (qrBlock) {
+            qrBlock.classList.remove('hidden');
+            qrBlock.classList.add('flex');
+        }
+    }
+    </script>
+    {% endif %}
+
     <!-- Email ingestion banner -->
     {% if email_ingestion_address %}
     <div class="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 rounded-xl p-4 mb-6">
