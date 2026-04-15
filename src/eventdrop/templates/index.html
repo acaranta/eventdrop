@@ -33,10 +33,12 @@
                 {{ t("index.go_to_events") }}
             </a>
             {% else %}
+            {% if allow_registration %}
             <a href="/auth/signup"
                class="inline-flex items-center justify-center px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-base font-semibold shadow-lg transition-colors">
                 {{ t("index.get_started") }}
             </a>
+            {% endif %}
             <a href="/auth/login"
                class="inline-flex items-center justify-center px-8 py-3 rounded-xl bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-base font-semibold border border-gray-300 dark:border-gray-600 shadow transition-colors">
                 {{ t("index.sign_in") }}
