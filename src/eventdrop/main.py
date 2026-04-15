@@ -29,7 +29,7 @@ templates.env.filters["tojson"] = _tojson_filter
 
 
 async def create_admin_user():
-    """Create or update the admin user from environment variables."""
+    """Create the admin user from environment variables on first run only."""
     from sqlalchemy import select
     from eventdrop.database.engine import AsyncSessionLocal
     from eventdrop.database.models import User
@@ -47,11 +47,10 @@ async def create_admin_user():
                 is_admin=True,
             )
             session.add(admin)
+            await session.commit()
+            logger.info(f"Admin user '{settings.admin_username}' created.")
         else:
-            admin.password_hash = hash_password(settings.admin_password)
-            admin.is_admin = True
-        await session.commit()
-        logger.info(f"Admin user '{settings.admin_username}' ready.")
+            logger.info(f"Admin user '{settings.admin_username}' already exists, skipping credential update.")
 
 
 @asynccontextmanager
