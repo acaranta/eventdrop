@@ -1,5 +1,9 @@
 # EventDrop
 
+<p align="center">
+  <img src="src/eventdrop/static/img/logo.png" alt="EventDrop" width="220">
+</p>
+
 EventDrop is a self-hosted web application for collecting and sharing photos and videos from events. Organizers create an event, share a link or QR code, and guests upload media directly from their devices — no account required. Media is stored in a gallery the organizer can browse, manage, and bulk-download as a ZIP archive.
 
 ## Table of Contents
