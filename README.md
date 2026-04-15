@@ -133,27 +133,6 @@ All settings are read from environment variables prefixed with `EVENTDROP_`. The
 | `EVENTDROP_BASE_URL` | `http://localhost:8000` | Public base URL of the application — used in generated upload links and QR codes |
 | `EVENTDROP_MAX_UPLOAD_SIZE_MB` | `500` | Maximum allowed size per uploaded file in megabytes |
 
-### Example `.env` File for Docker Compose
-
-```dotenv
-EVENTDROP_ADMIN_USERNAME=admin
-EVENTDROP_ADMIN_PASSWORD=a-strong-password
-EVENTDROP_SECRET_KEY=a-long-random-string-at-least-32-characters
-
-EVENTDROP_BASE_URL=https://eventdrop.example.com
-EVENTDROP_MAX_UPLOAD_SIZE_MB=200
-
-# Database (SQLite default)
-EVENTDROP_DB_TYPE=sqlite
-EVENTDROP_DB_PATH=/data/eventdrop.db
-
-# Storage (local default)
-EVENTDROP_STORAGE_TYPE=local
-EVENTDROP_STORAGE_LOCAL_PATH=/data/media
-```
-
-Pass the file to Docker Compose with `docker-compose --env-file .env up -d`.
-
 ---
 
 ## Development Setup
