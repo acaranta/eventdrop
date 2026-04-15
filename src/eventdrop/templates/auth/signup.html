@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Create an account — EventDrop{% endblock %}
+{% block title %}{{ t("auth.signup.title") }}{% endblock %}
 
 {% block content %}
 <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 class="text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-            Create your account
+            {{ t("auth.signup.heading") }}
         </h2>
         <p class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-            Already have an account?
+            {{ t("auth.signup.already_have_account") }}
             <a href="/auth/login" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
-                Sign in
+                {{ t("auth.signup.sign_in_link") }}
             </a>
         </p>
     </div>
@@ -19,13 +19,13 @@
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white dark:bg-gray-800 py-8 px-4 shadow rounded-xl sm:px-10 border border-gray-200 dark:border-gray-700">
 
-            {% if error %}
+            {% if error_key %}
             <div class="mb-4 rounded-md bg-red-50 dark:bg-red-900/30 p-4 border border-red-300 dark:border-red-700">
                 <div class="flex">
                     <svg class="h-5 w-5 text-red-400 dark:text-red-300 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
                     </svg>
-                    <p class="ml-3 text-sm text-red-700 dark:text-red-300">{{ error }}</p>
+                    <p class="ml-3 text-sm text-red-700 dark:text-red-300">{{ t(error_key) }}</p>
                 </div>
             </div>
             {% endif %}
@@ -33,7 +33,7 @@
             <form method="post" action="/auth/signup" class="space-y-5">
                 <div>
                     <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Username <span class="text-red-500">*</span>
+                        {{ t("auth.signup.username") }} <span class="text-red-500">*</span>
                     </label>
                     <div class="mt-1">
                         <input id="username" name="username" type="text" required autofocus
@@ -43,7 +43,7 @@
 
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Email address <span class="text-gray-400 dark:text-gray-500 text-xs font-normal">(optional)</span>
+                        {{ t("auth.signup.email") }} <span class="text-gray-400 dark:text-gray-500 text-xs font-normal">({{ t("common.optional") }})</span>
                     </label>
                     <div class="mt-1">
                         <input id="email" name="email" type="email"
@@ -53,7 +53,7 @@
 
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Password <span class="text-red-500">*</span>
+                        {{ t("auth.signup.password") }} <span class="text-red-500">*</span>
                     </label>
                     <div class="mt-1">
                         <input id="password" name="password" type="password" required
@@ -61,13 +61,13 @@
                                class="block w-full appearance-none rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 dark:placeholder-gray-500">
                     </div>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Must be at least 8 characters
+                        {{ t("auth.signup.password_hint") }}
                     </p>
                 </div>
 
                 <div>
                     <label for="confirm_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Confirm password <span class="text-red-500">*</span>
+                        {{ t("auth.signup.confirm_password") }} <span class="text-red-500">*</span>
                     </label>
                     <div class="mt-1">
                         <input id="confirm_password" name="confirm_password" type="password" required
@@ -78,7 +78,7 @@
                 <div>
                     <button type="submit"
                             class="flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2.5 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                        Create Account
+                        {{ t("auth.signup.create_btn") }}
                     </button>
                 </div>
             </form>

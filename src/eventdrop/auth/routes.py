@@ -15,34 +15,12 @@ from eventdrop.database.models import User
 from eventdrop.auth.passwords import hash_password, verify_password
 from eventdrop.auth.dependencies import get_current_user_optional
 from eventdrop.config import settings
+from eventdrop.utils.context import build_ctx
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 BASE_DIR = Path(__file__).parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-
-
-def _set_flash(request: Request, message: str, flash_type: str = "error") -> None:
-    """Store a flash message in the session for the next request."""
-    request.session["flash"] = {"type": flash_type, "message": message}
-
-
-def _pop_flash(request: Request) -> Optional[dict]:
-    """Read and remove the flash message from the session."""
-    flash = request.session.get("flash")
-    if flash:
-        del request.session["flash"]
-    return flash
-
-
-def _ctx(request: Request, user=None, **kwargs) -> dict:
-    """Build a base template context with flash, user and settings."""
-    return {
-        "user": user,
-        "settings": settings,
-        "flash": _pop_flash(request),
-        **kwargs,
-    }
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -59,10 +37,9 @@ async def login_get(
     return templates.TemplateResponse(
         request,
         "auth/login.html",
-        _ctx(
+        build_ctx(
             request,
             user=None,
-            error=None,
             oidc_enabled=settings.is_oidc_configured(),
             registration_allowed=reg_allowed,
             smtp_enabled=settings.is_smtp_configured(),
@@ -85,17 +62,16 @@ async def login_post(
         return templates.TemplateResponse(
             request,
             "auth/login.html",
-            _ctx(
+            build_ctx(
                 request,
                 user=None,
-                error="Invalid username or password",
+                error_key="flash.login_error",
                 oidc_enabled=settings.is_oidc_configured(),
             ),
             status_code=401,
         )
 
     request.session["user_id"] = str(user.id)
-    _set_flash(request, f"Welcome back, {user.username}!", "success")
     return RedirectResponse(url="/events/", status_code=302)
 
 
@@ -107,7 +83,7 @@ async def signup_get(request: Request, db: AsyncSession = Depends(get_db)):
     return templates.TemplateResponse(
         request,
         "auth/signup.html",
-        _ctx(request, user=None, error=None, registration_allowed=reg_allowed),
+        build_ctx(request, user=None, registration_allowed=reg_allowed),
     )
 
 
@@ -126,7 +102,7 @@ async def signup_post(
         return templates.TemplateResponse(
             request,
             "auth/signup.html",
-            _ctx(request, user=None, error="Registration is currently disabled."),
+            build_ctx(request, user=None, error_key="flash.registration_disabled"),
             status_code=403,
         )
 
@@ -135,7 +111,7 @@ async def signup_post(
         return templates.TemplateResponse(
             request,
             "auth/signup.html",
-            _ctx(request, user=None, error="Password must be at least 8 characters long"),
+            build_ctx(request, user=None, error_key="flash.signup_error_short"),
             status_code=400,
         )
 
@@ -144,7 +120,7 @@ async def signup_post(
         return templates.TemplateResponse(
             request,
             "auth/signup.html",
-            _ctx(request, user=None, error="Passwords do not match"),
+            build_ctx(request, user=None, error_key="flash.signup_error_password"),
             status_code=400,
         )
 
@@ -155,7 +131,7 @@ async def signup_post(
         return templates.TemplateResponse(
             request,
             "auth/signup.html",
-            _ctx(request, user=None, error="Username already taken"),
+            build_ctx(request, user=None, error_key="flash.signup_error_exists"),
             status_code=400,
         )
 
@@ -171,7 +147,6 @@ async def signup_post(
     await db.flush()
 
     request.session["user_id"] = str(new_user.id)
-    _set_flash(request, f"Welcome to EventDrop, {username}!", "success")
     return RedirectResponse(url="/events/", status_code=302)
 
 
@@ -184,7 +159,7 @@ async def logout(request: Request):
 
 @router.get("/forgot-password", response_class=HTMLResponse)
 async def forgot_password_get(request: Request):
-    return templates.TemplateResponse(request, "auth/forgot_password.html", _ctx(request))
+    return templates.TemplateResponse(request, "auth/forgot_password.html", build_ctx(request))
 
 
 @router.post("/forgot-password")
@@ -213,7 +188,7 @@ async def forgot_password_post(
         reset_url = f"{settings.base_url}/auth/reset-password?token={token}"
         await send_password_reset_email(user.email, reset_url)
 
-    _set_flash(request, "If that email is registered, a reset link has been sent.", "info")
+    request.session["flash"] = {"type": "info", "key": "flash.reset_sent"}
     return RedirectResponse(url="/auth/forgot-password", status_code=302)
 
 
@@ -221,7 +196,7 @@ async def forgot_password_post(
 async def reset_password_get(request: Request, token: str = ""):
     if not token:
         return RedirectResponse(url="/auth/login", status_code=302)
-    return templates.TemplateResponse(request, "auth/reset_password.html", _ctx(request, token=token))
+    return templates.TemplateResponse(request, "auth/reset_password.html", build_ctx(request, token=token))
 
 
 @router.post("/reset-password")
@@ -238,14 +213,14 @@ async def reset_password_post(
         return templates.TemplateResponse(
             request,
             "auth/reset_password.html",
-            _ctx(request, token=token, error="Password must be at least 8 characters."),
+            build_ctx(request, token=token, error_key="flash.password_error_short"),
             status_code=400,
         )
     if password != confirm_password:
         return templates.TemplateResponse(
             request,
             "auth/reset_password.html",
-            _ctx(request, token=token, error="Passwords do not match."),
+            build_ctx(request, token=token, error_key="flash.password_error_match"),
             status_code=400,
         )
 
@@ -259,7 +234,7 @@ async def reset_password_post(
         return templates.TemplateResponse(
             request,
             "auth/reset_password.html",
-            _ctx(request, token=token, error="This reset link is invalid or has expired."),
+            build_ctx(request, token=token, error_key="flash.reset_expired"),
             status_code=400,
         )
 
@@ -269,7 +244,7 @@ async def reset_password_post(
         return templates.TemplateResponse(
             request,
             "auth/reset_password.html",
-            _ctx(request, token=token, error="User not found."),
+            build_ctx(request, token=token, error_key="flash.reset_expired"),
             status_code=400,
         )
 
@@ -277,7 +252,7 @@ async def reset_password_post(
     reset_token.used = True
     await db.commit()
 
-    _set_flash(request, "Password reset successfully. Please log in.", "success")
+    request.session["flash"] = {"type": "success", "key": "flash.reset_success"}
     return RedirectResponse(url="/auth/login", status_code=302)
 
 
@@ -308,7 +283,7 @@ if settings.is_oidc_configured():
         try:
             token = await oauth.oidc.authorize_access_token(request)
         except Exception:
-            _set_flash(request, "OIDC login failed. Please try again.", "error")
+            request.session["flash"] = {"type": "error", "message": "OIDC login failed. Please try again."}
             return RedirectResponse(url="/auth/login", status_code=302)
 
         userinfo = token.get("userinfo") or await oauth.oidc.userinfo(token=token)
@@ -359,5 +334,5 @@ if settings.is_oidc_configured():
             await db.flush()
 
         request.session["user_id"] = str(user.id)
-        _set_flash(request, f"Welcome, {user.username}!", "success")
+        # No flash needed for OIDC login
         return RedirectResponse(url="/events/", status_code=302)

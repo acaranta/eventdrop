@@ -13,6 +13,7 @@ from eventdrop.services.media_service import (
 )
 from eventdrop.storage import get_storage
 from eventdrop.config import settings
+from eventdrop.utils.context import build_ctx
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -54,15 +55,14 @@ async def upload_page(event_id: str, request: Request, db: AsyncSession = Depend
     upload_url = f"{settings.base_url}/e/{event.id}/"
     qr_code = generate_qr_code_base64(upload_url)
 
-    return templates.TemplateResponse(request, "upload/upload.html", {
-        "user": auth_user,
-        "settings": settings,
-        "event": event,
-        "uploader_email": uploader_email,
-        "email_ingestion_address": email_ingestion_address,
-        "qr_code": qr_code,
-        "upload_url": upload_url,
-    })
+    return templates.TemplateResponse(request, "upload/upload.html", build_ctx(
+        request, auth_user,
+        event=event,
+        uploader_email=uploader_email,
+        email_ingestion_address=email_ingestion_address,
+        qr_code=qr_code,
+        upload_url=upload_url,
+    ))
 
 
 @router.post("/e/{event_id}/set-email")

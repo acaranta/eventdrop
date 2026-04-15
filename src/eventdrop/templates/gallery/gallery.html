@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Gallery — {{ event.name }} — EventDrop{% endblock %}
+{% block title %}{{ t("gallery.title").replace("{name}", event.name) }}{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
@@ -11,7 +11,7 @@
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
                 </svg>
-                My Events
+                {{ t("nav.my_events") }}
             </a>
             {% endif %}
             <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ event.name }}</h1>
@@ -19,7 +19,7 @@
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ event.description }}</p>
             {% endif %}
             <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                <span id="total-count">{{ media_with_urls|length }}</span> file{{ 's' if media_with_urls|length != 1 }}
+                <span id="total-count">{{ media_with_urls|length }}</span> {{ t("common.gallery") | lower }}
             </p>
         </div>
 
@@ -29,7 +29,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
                 </svg>
-                Upload More
+                {{ t("gallery.upload_more") }}
             </a>
             {% if can_download and media_with_urls %}
             <button type="button" onclick="downloadAll()"
@@ -37,7 +37,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
                 </svg>
-                Download All
+                {{ t("gallery.download_all") }}
             </button>
             {% endif %}
             {% if is_owner %}
@@ -47,7 +47,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
-                Manage
+                {{ t("gallery.manage") }}
             </a>
             {% endif %}
         </div>
@@ -62,10 +62,10 @@
             {# Uploader dropdown #}
             {% if contributors %}
             <div class="flex items-center gap-2">
-                <label class="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Uploaded by</label>
+                <label class="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ t("gallery.filter_uploader_label") }}</label>
                 <select onchange="if(this.value){const u=new URL(window.location);u.searchParams.set('uploader',this.value);{% if source_filter %}u.searchParams.set('source','{{ source_filter }}');{% else %}u.searchParams.delete('source');{% endif %}window.location=u;}else{const u=new URL(window.location);u.searchParams.delete('uploader');{% if source_filter %}u.searchParams.set('source','{{ source_filter }}');{% endif %}window.location=u;}"
                         class="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="" {% if not uploader_filter %}selected{% endif %}>All uploaders</option>
+                    <option value="" {% if not uploader_filter %}selected{% endif %}>{{ t("gallery.filter_all_uploaders") }}</option>
                     {% for contrib in contributors %}
                     <option value="{{ contrib.email }}" {% if uploader_filter == contrib.email %}selected{% endif %}>
                         {{ contrib.email }} ({{ contrib.count }})
@@ -77,23 +77,23 @@
 
             {# Source toggle #}
             <div class="flex items-center gap-1">
-                <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1 whitespace-nowrap">Type</span>
+                <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1 whitespace-nowrap">{{ t("gallery.filter_type_label") }}</span>
                 <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}"
                    class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if not source_filter %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}">
-                    All
+                    {{ t("gallery.filter_all") }}
                 </a>
                 <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}source=upload"
                    class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if source_filter == 'upload' %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}"
-                   title="Web upload">⬆️</a>
+                   title="{{ t('gallery.source_upload') }}">⬆️</a>
                 <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}source=email"
                    class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if source_filter == 'email' %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}"
-                   title="Email">📧</a>
+                   title="{{ t('gallery.source_email') }}">📧</a>
             </div>
 
             {# Clear filters #}
             {% if filters_active %}
             <a href="?" class="ml-auto text-xs text-indigo-600 dark:text-indigo-400 hover:underline whitespace-nowrap">
-                Clear filters ✕
+                {{ t("gallery.clear_filters") }}
             </a>
             {% endif %}
         </div>
@@ -101,7 +101,7 @@
         {# Active filter indicator #}
         {% if filters_active %}
         <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-1 items-center text-xs text-gray-500 dark:text-gray-400">
-            <span>Showing {{ media_with_urls|length }} item{{ 's' if media_with_urls|length != 1 }} · Filtered by:</span>
+            <span>{{ t("gallery.filtered_by").replace("{n}", media_with_urls|length|string) }}</span>
             {% if uploader_filter %}
             <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full">
                 👤 {{ uploader_filter }}
@@ -109,7 +109,7 @@
             {% endif %}
             {% if source_filter %}
             <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full">
-                {% if source_filter == 'email' %}📧 Email{% else %}⬆️ Web upload{% endif %}
+                {% if source_filter == 'email' %}📧 {{ t("gallery.filter_email") }}{% else %}⬆️ {{ t("gallery.filter_web") }}{% endif %}
             </span>
             {% endif %}
         </div>
@@ -124,7 +124,7 @@
                 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
                 </svg>
-                Contributors
+                {{ t("gallery.contributors_heading") }}
                 <span class="text-xs text-gray-400 font-normal">({{ contributors|length }})</span>
             </span>
             <svg class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -154,7 +154,7 @@
         <label class="flex items-center gap-2 cursor-pointer select-none">
             <input type="checkbox" id="select-all" class="h-4 w-4 text-indigo-600 border-gray-300 rounded cursor-pointer"
                    onchange="toggleAll(this.checked)">
-            <span class="text-sm text-gray-700 dark:text-gray-300">Select all</span>
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t("gallery.select_all") }}</span>
         </label>
         <span id="selected-label" class="text-xs text-gray-400 dark:text-gray-500 ml-1"></span>
     </div>
@@ -196,7 +196,7 @@
 
                 <!-- Source badge -->
                 <div class="absolute top-2 right-2 z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    <span class="text-sm drop-shadow" title="{% if item.source == 'email' %}Sent via email{% else %}Uploaded directly{% endif %}">
+                    <span class="text-sm drop-shadow" title="{% if item.source == 'email' %}{{ t('gallery.source_email') }}{% else %}{{ t('gallery.source_upload') }}{% endif %}">
                         {% if item.source == 'email' %}📧{% else %}⬆️{% endif %}
                     </span>
                 </div>
@@ -227,7 +227,7 @@
                         <a href="{{ item.url }}" download="{{ item.filename }}"
                            onclick="event.stopPropagation()"
                            class="p-1 rounded bg-white/20 hover:bg-white/40 transition-colors"
-                           title="Download">
+                           title="{{ t('gallery.download_btn') }}">
                             <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
                             </svg>
@@ -237,7 +237,7 @@
                         <button type="button"
                                 onclick="deleteSingle('{{ item.id }}', event)"
                                 class="p-1 rounded bg-red-500/70 hover:bg-red-500/90 transition-colors"
-                                title="Delete">
+                                title="{{ t('gallery.delete_btn') }}">
                             <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
                             </svg>
@@ -254,7 +254,7 @@
             <div class="px-2 py-1.5 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 flex-1">
                 <div class="flex items-center justify-between gap-1 mb-0.5">
                     <p class="text-xs font-medium text-gray-800 dark:text-gray-200 truncate" title="{{ item.filename }}">{{ item.filename }}</p>
-                    <span class="text-xs flex-shrink-0 ml-1" title="{% if item.source == 'email' %}Sent via email{% else %}Uploaded directly{% endif %}">
+                    <span class="text-xs flex-shrink-0 ml-1" title="{% if item.source == 'email' %}{{ t('gallery.source_email') }}{% else %}{{ t('gallery.source_upload') }}{% endif %}">
                         {% if item.source == 'email' %}📧{% else %}⬆️{% endif %}
                     </span>
                 </div>
@@ -271,7 +271,7 @@
                 {% if item.upload_message is not none %}
                 <div class="mt-1.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 text-xs text-gray-600 dark:text-gray-300 italic line-clamp-2">
                     {% if not item.message_is_public %}
-                    <span class="not-italic mr-1" title="Only visible to event owner">🔒</span>
+                    <span class="not-italic mr-1" title="{{ t('gallery.private_message_hint') }}">🔒</span>
                     {% endif %}{{ item.upload_message }}
                 </div>
                 {% endif %}
@@ -288,14 +288,14 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21h18"/>
             </svg>
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No files yet</h3>
-        <p class="text-gray-500 dark:text-gray-400 mb-6">Be the first to upload photos or videos to this event!</p>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ t("gallery.no_media") }}</h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-6">{{ t("gallery.be_first") }}</p>
         <a href="/e/{{ event.id }}/"
            class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold rounded-lg transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
             </svg>
-            Upload Files
+            {{ t("gallery.upload_files_btn") }}
         </a>
     </div>
     {% endif %}
@@ -307,7 +307,7 @@
      class="hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-2xl px-4 py-3 sm:px-6">
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
         <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            <span id="toolbar-count">0</span> selected
+            <span id="toolbar-count">0</span> {{ t("gallery.selected") }}
         </p>
         <div class="flex gap-2">
             {% if can_download %}
@@ -316,7 +316,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
                 </svg>
-                Download
+                {{ t("gallery.download_btn") }}
             </button>
             {% endif %}
             {% if can_delete %}
@@ -325,12 +325,12 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
                 </svg>
-                Delete
+                {{ t("gallery.delete_btn") }}
             </button>
             {% endif %}
             <button type="button" onclick="clearSelection()"
                     class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
-                Cancel
+                {{ t("common.cancel") }}
             </button>
         </div>
     </div>
@@ -348,19 +348,19 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
                 </svg>
             </div>
-            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Delete Files</h3>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ t("gallery.delete_modal_title") }}</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="delete-modal-message">
-                Delete selected files permanently?
+                {{ t("gallery.delete_confirm_msg").replace("{n}", "…") }}
             </p>
         </div>
         <div class="flex gap-3">
             <button type="button" onclick="closeDeleteModal()"
                     class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors text-sm">
-                Cancel
+                {{ t("common.cancel") }}
             </button>
             <button type="button" id="delete-confirm-btn" onclick="executeDelete()"
                     class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors text-sm">
-                Delete
+                {{ t("gallery.delete_btn") }}
             </button>
         </div>
     </div>
@@ -405,8 +405,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
             </svg>
         </div>
-        <p class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1" id="download-status">Preparing download…</p>
-        <p class="text-sm text-gray-500 dark:text-gray-400">This may take a moment for large archives</p>
+        <p class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1" id="download-status">{{ t("gallery.preparing_download") }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("gallery.download_wait") }}</p>
         <div class="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div id="download-bar" class="bg-green-500 h-2 rounded-full animate-pulse" style="width: 40%"></div>
         </div>
@@ -423,6 +423,20 @@ const canDownload = {{ 'true' if can_download else 'false' }};
 // Active filter state exposed as globals
 window.UPLOADER_FILTER = {{ ('"' ~ uploader_filter ~ '"') if uploader_filter else 'null' }};
 window.SOURCE_FILTER = {{ ('"' ~ source_filter ~ '"') if source_filter else 'null' }};
+
+// Translated strings for JS
+const _t = {
+    selected: {{ t("gallery.selected") | tojson }},
+    preparingArchive: {{ t("gallery.preparing_archive") | tojson }},
+    downloading: {{ t("gallery.downloading") | tojson }},
+    selectFilesAlert: {{ t("gallery.select_files_alert") | tojson }},
+    downloadFailed: {{ t("gallery.download_failed") | tojson }},
+    deleteFailed: {{ t("gallery.delete_failed") | tojson }},
+    filesNotDeleted: {{ t("gallery.files_not_deleted") | tojson }},
+    deleteConfirmMsg: {{ t("gallery.delete_confirm_msg") | tojson }},
+    deleting: {{ t("gallery.deleting") | tojson }},
+    deleteBtn: {{ t("gallery.delete_btn") | tojson }},
+};
 
 // Gather all media items
 const allItems = Array.from(document.querySelectorAll('[data-id]'));
@@ -472,7 +486,7 @@ function updateToolbar() {
     const labelEl = document.getElementById('selected-label');
     if (toolbar) toolbar.classList.toggle('hidden', count === 0);
     if (countEl) countEl.textContent = count;
-    if (labelEl) labelEl.textContent = count > 0 ? `${count} selected` : '';
+    if (labelEl) labelEl.textContent = count > 0 ? `${count} ${_t.selected}` : '';
 }
 
 function clearSelection() {
@@ -567,7 +581,7 @@ async function downloadAll() {
 
 async function downloadSelected() {
     const ids = getSelectedIds();
-    if (!ids.length) { alert('Select files to download.'); return; }
+    if (!ids.length) { alert(_t.selectFilesAlert); return; }
     await startDownload(`/api/events/${eventId}/media/download`, { media_ids: ids });
 }
 
@@ -575,7 +589,7 @@ async function startDownload(url, body) {
     const overlay = document.getElementById('download-overlay');
     const status = document.getElementById('download-status');
     overlay.classList.remove('hidden');
-    status.textContent = 'Preparing archive…';
+    status.textContent = _t.preparingArchive;
     try {
         const res = await fetch(url, {
             method: 'POST',
@@ -587,12 +601,12 @@ async function startDownload(url, body) {
             throw new Error(j.detail || 'Request failed');
         }
         const data = await res.json();
-        status.textContent = `Downloading ${data.file_count || ''} file(s)…`;
+        status.textContent = _t.downloading.replace('{n}', data.file_count || '');
         window.location.href = data.download_url;
         setTimeout(() => overlay.classList.add('hidden'), 3000);
     } catch (e) {
         overlay.classList.add('hidden');
-        alert('Download failed: ' + e.message);
+        alert(_t.downloadFailed + e.message);
     }
 }
 
@@ -602,7 +616,7 @@ function openDeleteModal(ids) {
     if (!idsToDelete.length) return;
     pendingDeleteIds = idsToDelete;
     const msg = document.getElementById('delete-modal-message');
-    if (msg) msg.textContent = `Delete ${idsToDelete.length} file(s) permanently? This cannot be undone.`;
+    if (msg) msg.textContent = _t.deleteConfirmMsg.replace('{n}', idsToDelete.length);
     document.getElementById('delete-modal')?.classList.remove('hidden');
 }
 
@@ -614,7 +628,7 @@ function closeDeleteModal() {
 async function executeDelete() {
     if (!pendingDeleteIds.length) return;
     const btn = document.getElementById('delete-confirm-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+    if (btn) { btn.disabled = true; btn.textContent = _t.deleting; }
 
     try {
         const res = await fetch(`/api/events/${eventId}/media/delete`, {
@@ -644,13 +658,13 @@ async function executeDelete() {
         }
 
         if (data.errors && data.errors.length) {
-            alert(`${data.errors.length} file(s) could not be deleted.`);
+            alert(_t.filesNotDeleted.replace('{n}', data.errors.length));
         }
     } catch (e) {
-        alert('Delete failed: ' + e.message);
+        alert(_t.deleteFailed + e.message);
     } finally {
         closeDeleteModal();
-        if (btn) { btn.disabled = false; btn.textContent = 'Delete'; }
+        if (btn) { btn.disabled = false; btn.textContent = _t.deleteBtn; }
     }
 }
 

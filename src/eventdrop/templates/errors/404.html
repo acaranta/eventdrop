@@ -1,14 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}404 — Page Not Found — EventDrop{% endblock %}
+{% block title %}{{ t("errors.e404_title") }}{% endblock %}
 
 {% block content %}
 <div class="flex flex-col items-center justify-center py-24 px-4 text-center">
     <p class="text-8xl font-extrabold text-blue-600 dark:text-blue-400 leading-none">404</p>
-    <h1 class="mt-4 text-2xl font-bold text-gray-900 dark:text-gray-100">Page not found</h1>
+    <h1 class="mt-4 text-2xl font-bold text-gray-900 dark:text-gray-100">{{ t("errors.e404_heading") }}</h1>
     <p class="mt-3 text-base text-gray-500 dark:text-gray-400 max-w-md">
-        Sorry, we couldn't find the page you were looking for.
-        It may have been moved or deleted.
+        {{ t("errors.e404_desc") }}
     </p>
     <div class="mt-8 flex gap-4">
         <a href="/"
@@ -16,11 +15,11 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
             </svg>
-            Go home
+            {{ t("errors.go_home") }}
         </a>
         <button onclick="history.back()"
                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold border border-gray-300 dark:border-gray-600 transition-colors">
-            Go back
+            {{ t("errors.go_back") }}
         </button>
     </div>
 </div>

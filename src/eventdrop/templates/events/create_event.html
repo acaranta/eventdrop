@@ -1,56 +1,56 @@
 {% extends "base.html" %}
-{% block title %}Create Event — EventDrop{% endblock %}
+{% block title %}{{ t("events.create.title") }}{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Breadcrumb -->
     <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
-        <a href="/events/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">My Events</a>
+        <a href="/events/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{{ t("events.list.heading") }}</a>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
         </svg>
-        <span class="text-gray-700 dark:text-gray-200 font-medium">New Event</span>
+        <span class="text-gray-700 dark:text-gray-200 font-medium">{{ t("events.create.breadcrumb_new") }}</span>
     </div>
 
     <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Create New Event</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Set up a new event to collect photos and videos from your guests.</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ t("events.create.heading") }}</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t("events.create.subtitle") }}</p>
     </div>
 
     <form method="post" action="/events/create" class="space-y-6">
         <!-- Basic info card -->
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 space-y-5">
-            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Event Details</h2>
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">{{ t("events.create.section_details") }}</h2>
 
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Event Name <span class="text-red-500">*</span>
+                    {{ t("events.create.field_name") }} <span class="text-red-500">*</span>
                 </label>
                 <input type="text" id="name" name="name" required autofocus
-                       placeholder="My Wedding, Conference 2025, Birthday Party…"
+                       placeholder="{{ t('events.create.name_placeholder') }}"
                        class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
             </div>
 
             <div>
                 <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Description
-                    <span class="text-gray-400 font-normal">(optional)</span>
+                    {{ t("events.create.field_description") }}
+                    <span class="text-gray-400 font-normal">({{ t("common.optional") }})</span>
                 </label>
                 <textarea id="description" name="description" rows="3"
-                          placeholder="Tell guests what this event is about…"
+                          placeholder="{{ t('events.create.desc_placeholder') }}"
                           class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm resize-none"></textarea>
             </div>
         </div>
 
         <!-- Gallery settings card -->
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 space-y-4">
-            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Gallery Settings</h2>
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">{{ t("events.create.section_gallery") }}</h2>
 
             <!-- Public gallery toggle -->
             <label class="flex items-center justify-between gap-4 cursor-pointer group py-1">
                 <div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Public Gallery</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Anyone with the link can view the gallery</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ t("events.create.public_gallery_label") }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ t("events.create.public_gallery_hint") }}</p>
                 </div>
                 <div class="relative flex-shrink-0">
                     <input type="checkbox" id="is_gallery_public" name="is_gallery_public" value="true"
@@ -65,8 +65,8 @@
             <!-- Allow download toggle -->
             <label class="flex items-center justify-between gap-4 cursor-pointer group py-1">
                 <div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Allow Public Download</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Gallery visitors can download photos and videos</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ t("events.create.allow_download_label") }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ t("events.create.allow_download_hint") }}</p>
                 </div>
                 <div class="relative flex-shrink-0">
                     <input type="checkbox" id="allow_public_download" name="allow_public_download" value="true"
@@ -88,11 +88,11 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
                 </svg>
-                Create Event
+                {{ t("events.create.create_btn") }}
             </button>
             <a href="/events/"
                class="inline-flex items-center justify-center px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors text-sm">
-                Cancel
+                {{ t("events.create.cancel_btn") }}
             </a>
         </div>
     </form>

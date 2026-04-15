@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}EventDrop — Share your event moments{% endblock %}
+{% block title %}{{ t("index.title") }}{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
@@ -20,8 +20,7 @@
             EventDrop
         </h1>
         <p class="mt-5 max-w-2xl mx-auto text-lg sm:text-xl text-gray-600 dark:text-gray-300">
-            The easiest way to collect and share photos &amp; videos from your events.
-            No app required for guests — just drop and enjoy.
+            {{ t("index.tagline") }}
         </p>
 
         <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
@@ -31,16 +30,16 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5"/>
                 </svg>
-                Go to My Events
+                {{ t("index.go_to_events") }}
             </a>
             {% else %}
             <a href="/auth/signup"
                class="inline-flex items-center justify-center px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-base font-semibold shadow-lg transition-colors">
-                Get started for free
+                {{ t("index.get_started") }}
             </a>
             <a href="/auth/login"
                class="inline-flex items-center justify-center px-8 py-3 rounded-xl bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-base font-semibold border border-gray-300 dark:border-gray-600 shadow transition-colors">
-                Sign in
+                {{ t("index.sign_in") }}
             </a>
             {% endif %}
         </div>
@@ -57,9 +56,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21h18M2.25 3h19.5M3.75 3v.75A.75.75 0 003 4.5H2.25m19.5 0H21a.75.75 0 00-.75.75V3M3.75 21V4.5"/>
                     </svg>
                 </div>
-                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Photos &amp; Videos</h3>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ t("index.feature_media_title") }}</h3>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    Accept any media format from your guests instantly.
+                    {{ t("index.feature_media_desc") }}
                 </p>
             </div>
             <div class="text-center">
@@ -68,9 +67,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
                     </svg>
                 </div>
-                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Easy Sharing</h3>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ t("index.feature_share_title") }}</h3>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    Share a link — no account needed for your guests to upload.
+                    {{ t("index.feature_share_desc") }}
                 </p>
             </div>
             <div class="text-center">
@@ -79,9 +78,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
                     </svg>
                 </div>
-                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Download Archive</h3>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ t("index.feature_download_title") }}</h3>
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    Download all your event memories in one ZIP archive.
+                    {{ t("index.feature_download_desc") }}
                 </p>
             </div>
         </div>

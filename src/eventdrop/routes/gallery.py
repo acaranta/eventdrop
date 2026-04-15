@@ -11,6 +11,7 @@ from eventdrop.database.session import get_db
 from eventdrop.database.models import Event, MediaFile
 from eventdrop.storage import get_storage
 from eventdrop.config import settings
+from eventdrop.utils.context import build_ctx
 
 router = APIRouter(tags=["gallery"])
 BASE_DIR = Path(__file__).parent.parent
@@ -91,15 +92,14 @@ async def gallery_page(
             "message_is_public": mf.message_is_public,
         })
 
-    return templates.TemplateResponse(request, "gallery/gallery.html", {
-        "user": auth_user,
-        "settings": settings,
-        "event": event,
-        "media_with_urls": media_with_urls,
-        "is_owner": is_owner,
-        "can_download": event.allow_public_download or bool(is_owner),
-        "can_delete": bool(is_owner),
-        "contributors": contributors,
-        "uploader_filter": uploader_filter,
-        "source_filter": source_filter,
-    })
+    return templates.TemplateResponse(request, "gallery/gallery.html", build_ctx(
+        request, auth_user,
+        event=event,
+        media_with_urls=media_with_urls,
+        is_owner=is_owner,
+        can_download=event.allow_public_download or bool(is_owner),
+        can_delete=bool(is_owner),
+        contributors=contributors,
+        uploader_filter=uploader_filter,
+        source_filter=source_filter,
+    ))

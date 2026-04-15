@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Log in — EventDrop{% endblock %}
+{% block title %}{{ t("auth.login.title") }}{% endblock %}
 
 {% block content %}
 <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 class="text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-            Sign in to your account
+            {{ t("auth.login.heading") }}
         </h2>
         {% if registration_allowed %}
         <p class="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
-            Or
+            {{ t("auth.login.or_create") }}
             <a href="/auth/signup" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
-                create a new account
+                {{ t("auth.login.create_account_link") }}
             </a>
         </p>
         {% endif %}
@@ -21,13 +21,13 @@
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white dark:bg-gray-800 py-8 px-4 shadow rounded-xl sm:px-10 border border-gray-200 dark:border-gray-700">
 
-            {% if error %}
+            {% if error_key %}
             <div class="mb-4 rounded-md bg-red-50 dark:bg-red-900/30 p-4 border border-red-300 dark:border-red-700">
                 <div class="flex">
                     <svg class="h-5 w-5 text-red-400 dark:text-red-300 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
                     </svg>
-                    <p class="ml-3 text-sm text-red-700 dark:text-red-300">{{ error }}</p>
+                    <p class="ml-3 text-sm text-red-700 dark:text-red-300">{{ t(error_key) }}</p>
                 </div>
             </div>
             {% endif %}
@@ -35,7 +35,7 @@
             <form method="post" action="/auth/login" class="space-y-5">
                 <div>
                     <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Username
+                        {{ t("auth.login.username") }}
                     </label>
                     <div class="mt-1">
                         <input id="username" name="username" type="text" required autofocus
@@ -45,7 +45,7 @@
 
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Password
+                        {{ t("auth.login.password") }}
                     </label>
                     <div class="mt-1">
                         <input id="password" name="password" type="password" required
@@ -53,7 +53,7 @@
                     </div>
                     {% if smtp_enabled %}
                     <div class="text-right mt-1">
-                        <a href="/auth/forgot-password" class="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">Forgot your password?</a>
+                        <a href="/auth/forgot-password" class="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">{{ t("auth.login.forgot_password") }}</a>
                     </div>
                     {% endif %}
                 </div>
@@ -61,7 +61,7 @@
                 <div>
                     <button type="submit"
                             class="flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2.5 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                        Sign in
+                        {{ t("auth.login.sign_in_btn") }}
                     </button>
                 </div>
             </form>
@@ -73,7 +73,7 @@
                         <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
                     </div>
                     <div class="relative flex justify-center text-sm">
-                        <span class="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">Or continue with</span>
+                        <span class="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">{{ t("auth.login.or_continue_with") }}</span>
                     </div>
                 </div>
 

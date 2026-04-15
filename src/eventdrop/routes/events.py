@@ -12,27 +12,22 @@ from eventdrop.services import event_service
 from eventdrop.storage import get_storage
 from eventdrop.config import settings
 from eventdrop.utils.qrcode import generate_qr_code_base64
+from eventdrop.utils.context import build_ctx
 
 router = APIRouter(prefix="/events", tags=["events"])
 BASE_DIR = Path(__file__).parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
-def user_ctx(request, user, **kwargs):
-    return {"user": user, "settings": settings, **kwargs}
-
-
 @router.get("/", response_class=HTMLResponse)
 async def my_events(request: Request, user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     events = await event_service.list_events_by_owner(db, str(user.id))
-    flash = request.session.pop("flash", None)
-    return templates.TemplateResponse(request, "events/my_events.html", user_ctx(request, user, events=events, flash=flash))
+    return templates.TemplateResponse(request, "events/my_events.html", build_ctx(request, user, events=events))
 
 
 @router.get("/create", response_class=HTMLResponse)
 async def create_event_form(request: Request, user=Depends(get_current_user)):
-    flash = request.session.pop("flash", None)
-    return templates.TemplateResponse(request, "events/create_event.html", user_ctx(request, user, flash=flash))
+    return templates.TemplateResponse(request, "events/create_event.html", build_ctx(request, user))
 
 
 @router.post("/create")
@@ -74,7 +69,7 @@ async def create_event_submit(
         })
 
     await db.commit()
-    request.session["flash"] = {"type": "success", "message": f"Event '{name}' created successfully!"}
+    request.session["flash"] = {"type": "success", "key": "flash.event_created"}
     return RedirectResponse(url=f"/events/{event.id}/edit", status_code=303)
 
 
@@ -88,7 +83,6 @@ async def edit_event_form(event_id: str, request: Request, user=Depends(get_curr
     upload_url = f"{settings.base_url}/e/{event.id}/"
     qr_code = generate_qr_code_base64(upload_url)
     stats = await event_service.get_event_stats(db, event_id)
-    flash = request.session.pop("flash", None)
 
     from sqlalchemy import select, func
     from eventdrop.database.models import MediaFile
@@ -103,9 +97,9 @@ async def edit_event_form(event_id: str, request: Request, user=Depends(get_curr
     )
     contributors = [{"email": row.uploader_email, "count": row.count} for row in contrib_result]
 
-    return templates.TemplateResponse(request, "events/edit_event.html", user_ctx(
+    return templates.TemplateResponse(request, "events/edit_event.html", build_ctx(
         request, user, event=event, upload_url=upload_url, qr_code=qr_code, stats=stats,
-        flash=flash, contributors=contributors
+        contributors=contributors
     ))
 
 
@@ -164,7 +158,7 @@ async def edit_event_submit(
                 cfg.is_enabled = False
 
     await db.commit()
-    request.session["flash"] = {"type": "success", "message": "Event updated successfully."}
+    request.session["flash"] = {"type": "success", "key": "flash.event_updated"}
     return RedirectResponse(url=f"/events/{event_id}/edit", status_code=303)
 
 
@@ -176,7 +170,7 @@ async def delete_event(event_id: str, request: Request, user=Depends(get_current
     storage = get_storage()
     await event_service.delete_event(db, event_id, storage)
     await db.commit()
-    request.session["flash"] = {"type": "success", "message": "Event deleted."}
+    request.session["flash"] = {"type": "success", "key": "flash.event_deleted"}
     return RedirectResponse(url="/events/", status_code=303)
 
 

@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -8,6 +9,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 from starlette.middleware.sessions import SessionMiddleware
 
 from eventdrop.config import settings
@@ -18,6 +20,12 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+# Register tojson filter (not built-in in plain Jinja2)
+def _tojson_filter(value, **kwargs):
+    return Markup(json.dumps(value, **kwargs))
+
+templates.env.filters["tojson"] = _tojson_filter
 
 
 async def create_admin_user():
@@ -100,9 +108,11 @@ async def serve_media(path: str):
 from eventdrop.routes import admin, events, upload, gallery, api  # noqa: E402
 from eventdrop.auth.routes import router as auth_router  # noqa: E402
 from eventdrop.routes.account import router as account_router  # noqa: E402
+from eventdrop.routes.lang import router as lang_router  # noqa: E402
 
 app.include_router(auth_router)
 app.include_router(account_router)
+app.include_router(lang_router)
 app.include_router(admin.router)
 app.include_router(events.router)
 app.include_router(upload.router)
@@ -115,6 +125,7 @@ async def root(request: Request):
     from sqlalchemy import select
     from eventdrop.database.engine import AsyncSessionLocal
     from eventdrop.database.models import User as UserModel
+    from eventdrop.utils.context import build_ctx
 
     user = None
     user_id = request.session.get("user_id")
@@ -127,31 +138,30 @@ async def root(request: Request):
         from fastapi.responses import RedirectResponse
         return RedirectResponse(url="/events/")
 
-    flash = request.session.get("flash")
-    if flash:
-        del request.session["flash"]
     return templates.TemplateResponse(
         request,
         "index.html",
-        {"user": None, "settings": settings, "flash": flash},
+        build_ctx(request, user=None),
     )
 
 
 @app.exception_handler(404)
 async def not_found(request: Request, exc):
+    from eventdrop.utils.context import build_ctx
     return templates.TemplateResponse(
         request,
         "errors/404.html",
-        {"user": None, "settings": settings, "flash": None},
+        build_ctx(request, user=None),
         status_code=404,
     )
 
 
 @app.exception_handler(500)
 async def server_error(request: Request, exc):
+    from eventdrop.utils.context import build_ctx
     return templates.TemplateResponse(
         request,
         "errors/500.html",
-        {"user": None, "settings": settings, "flash": None},
+        build_ctx(request, user=None),
         status_code=500,
     )

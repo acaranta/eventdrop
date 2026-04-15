@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Upload — {{ event.name }} — EventDrop{% endblock %}
+{% block title %}{{ t("upload.page_title").replace("{name}", event.name) }}{% endblock %}
 
 {% block content %}
 <div class="max-w-lg mx-auto px-4 sm:px-6 py-8">
@@ -14,12 +14,12 @@
     <!-- QR code: shown only on non-touch / desktop (hidden on mobile via JS) -->
     {% if qr_code %}
     <div id="qr-share-block" class="hidden flex-col items-center gap-3 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl p-5 mb-6 text-center">
-        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Open on your phone</p>
+        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ t("upload.qr_heading") }}</p>
         <img src="data:image/png;base64,{{ qr_code }}"
              alt="QR code for {{ upload_url }}"
              class="w-36 h-36 rounded-lg">
         <p class="text-xs text-gray-500 dark:text-gray-400 max-w-[200px]">
-            Scan this code with your phone camera to upload directly from your device
+            {{ t("upload.qr_desc") }}
         </p>
     </div>
     <script>
@@ -40,9 +40,9 @@
         <div class="flex gap-3">
             <span class="text-xl flex-shrink-0">📧</span>
             <div>
-                <p class="text-sm font-semibold text-indigo-800 dark:text-indigo-200 mb-0.5">Send photos by email</p>
+                <p class="text-sm font-semibold text-indigo-800 dark:text-indigo-200 mb-0.5">{{ t("upload.email_send_heading") }}</p>
                 <p class="text-sm text-indigo-700 dark:text-indigo-300">
-                    You can also send photos and videos as email attachments to:<br>
+                    {{ t("upload.email_send_desc") }}<br>
                     <strong class="font-mono text-indigo-900 dark:text-indigo-100 break-all">{{ email_ingestion_address }}</strong>
                 </p>
                 <button type="button" onclick="copyEmail(this, '{{ email_ingestion_address }}')"
@@ -50,7 +50,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"/>
                     </svg>
-                    Copy address
+                    {{ t("upload.copy_address") }}
                 </button>
             </div>
         </div>
@@ -66,8 +66,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
                 </svg>
             </div>
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Enter your email to upload</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Your email is used to attribute your uploads. No account required.</p>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{{ t("upload.email_gate_heading") }}</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("upload.email_gate_desc") }}</p>
         </div>
         <form method="post" action="/e/{{ event.id }}/set-email" class="space-y-3">
             <input type="email" name="email" required
@@ -76,7 +76,7 @@
                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base">
             <button type="submit"
                     class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold rounded-xl transition-colors text-base">
-                Continue to Upload
+                {{ t("upload.email_gate_btn") }}
             </button>
         </form>
     </div>
@@ -90,7 +90,7 @@
                 {{ email_display[0]|upper if email_display else '?' }}
             </span>
             <div>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Uploading as</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ t("upload.uploading_as") }}</p>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[200px]">
                     {{ uploader_email or (user.email if user and user.email else user.username if user else '') }}
                 </p>
@@ -99,7 +99,7 @@
         {% if not user %}
         <form method="post" action="/e/{{ event.id }}/clear-email">
             <button type="submit" class="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors">
-                Not you?
+                {{ t("upload.not_you") }}
             </button>
         </form>
         {% endif %}
@@ -108,19 +108,19 @@
     <!-- Message section -->
     <div id="message-section" class="mb-4">
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Add a message <span class="text-slate-400 font-normal">(optional)</span>
+            {{ t("upload.message_label") }} <span class="text-slate-400 font-normal">({{ t("common.optional") }})</span>
         </label>
         <textarea
             id="upload-message"
             rows="3"
             maxlength="500"
-            placeholder="Write a message for these photos... (max 500 chars, emojis welcome 😊)"
+            placeholder="{{ t('upload.message_placeholder') }}"
             class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
         ></textarea>
         <div class="flex items-center justify-between mt-2">
             <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
                 <input type="checkbox" id="message-public" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                <span>Make message visible to everyone</span>
+                <span>{{ t("upload.message_public_toggle") }}</span>
             </label>
             <span id="message-char-count" class="text-xs text-slate-400">0/500</span>
         </div>
@@ -136,19 +136,19 @@
 
         <!-- Drop overlay -->
         <div id="drop-overlay" class="hidden absolute inset-0 rounded-2xl bg-indigo-50/80 dark:bg-indigo-900/40 border-2 border-indigo-400 dark:border-indigo-500 border-dashed flex items-center justify-center">
-            <p class="text-lg font-semibold text-indigo-600 dark:text-indigo-300">Drop files here</p>
+            <p class="text-lg font-semibold text-indigo-600 dark:text-indigo-300">{{ t("upload.drop_heading") }}</p>
         </div>
 
         <svg class="mx-auto w-14 h-14 text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.32 5.75 5.75 0 011.043 11.06M12 9.75"/>
         </svg>
 
-        <p class="text-base font-semibold text-gray-700 dark:text-gray-300 mb-1">Drop files here or tap to select</p>
+        <p class="text-base font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ t("upload.drop_heading") }}</p>
         <p class="text-sm text-gray-400 dark:text-gray-500 mb-3">
-            Photos and videos up to {{ settings.max_upload_size_mb }} MB each
+            {{ t("upload.drop_hint").replace("{max_mb}", settings.max_upload_size_mb|string) }}
         </p>
         <p class="text-xs text-gray-400 dark:text-gray-500">
-            JPEG, PNG, GIF, WebP, HEIC, MP4, MOV, AVI and more
+            {{ t("upload.drop_formats") }}
         </p>
 
         <input type="file" id="file-input" multiple accept="image/*,video/*"
@@ -162,7 +162,7 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
         </svg>
-        Select Files to Upload
+        {{ t("upload.select_btn") }}
     </button>
 
     <!-- Upload queue -->
@@ -171,11 +171,11 @@
     <!-- Summary -->
     <div id="upload-summary" class="hidden bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 text-center">
         <p class="text-base font-semibold text-green-800 dark:text-green-200 mb-1">
-            ✅ <span id="done-count">0</span> file(s) uploaded!
+            ✅ <span id="done-count">0</span> {{ t("upload.done_message").replace("{n}", "") }}
         </p>
         {% if event.is_gallery_public %}
         <a href="/e/{{ event.id }}/gallery/"
-           class="text-sm text-green-700 dark:text-green-300 hover:underline">View gallery →</a>
+           class="text-sm text-green-700 dark:text-green-300 hover:underline">{{ t("upload.view_gallery") }}</a>
         {% endif %}
     </div>
     {% endif %}
@@ -388,7 +388,7 @@ function updateSummary() {
 function copyEmail(btn, email) {
     navigator.clipboard.writeText(email).then(() => {
         const original = btn.innerHTML;
-        btn.innerHTML = '<svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Copied!';
+        btn.innerHTML = '<svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>{{ t("common.copied") }}';
         setTimeout(() => { btn.innerHTML = original; }, 2000);
     });
 }
@@ -398,7 +398,7 @@ function copyEmail(btn, email) {
 function copyEmail(btn, email) {
     navigator.clipboard.writeText(email).then(() => {
         const original = btn.innerHTML;
-        btn.innerHTML = '<svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Copied!';
+        btn.innerHTML = '<svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>{{ t("common.copied") }}';
         setTimeout(() => { btn.innerHTML = original; }, 2000);
     });
 }

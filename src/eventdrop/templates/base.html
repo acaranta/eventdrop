@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="{{ lang | default('en') }}" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,6 +27,16 @@
                 document.documentElement.classList.remove('dark');
             }
         })();
+        // Set language cookie on first visit using browser language
+        (function () {
+            const supported = ['en', 'fr', 'de', 'es', 'it'];
+            if (!document.cookie.split(';').some(function(c) { return c.trim().startsWith('lang='); })) {
+                const code = (navigator.language || '').slice(0, 2).toLowerCase();
+                if (supported.includes(code)) {
+                    document.cookie = 'lang=' + code + ';path=/;max-age=' + (365 * 24 * 3600) + ';samesite=lax';
+                }
+            }
+        })();
     </script>
     {% block head %}{% endblock %}
 </head>
@@ -45,12 +55,12 @@
                     <div class="hidden sm:ml-8 sm:flex sm:space-x-4">
                         <a href="/events/"
                            class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            My Events
+                            {{ t("nav.my_events") }}
                         </a>
                         {% if user.is_admin %}
                         <a href="/admin/"
                            class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            Admin
+                            {{ t("nav.admin") }}
                         </a>
                         {% endif %}
                     </div>
@@ -58,10 +68,19 @@
                 </div>
 
                 <!-- Right side -->
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2">
+                    <!-- Language selector -->
+                    <div class="flex items-center gap-0.5">
+                        {% for code in supported_langs %}
+                        <a href="/set-lang?lang={{ code }}&next={{ request.url.path }}"
+                           class="text-base px-1 py-0.5 rounded transition-colors {% if lang == code %}ring-1 ring-indigo-400 bg-indigo-50 dark:bg-indigo-900/40{% else %}opacity-60 hover:opacity-100{% endif %}"
+                           title="{{ code | upper }}">{{ lang_flags[code] }}</a>
+                        {% endfor %}
+                    </div>
+
                     <!-- Dark mode toggle -->
                     <button id="theme-toggle"
-                            title="Toggle dark mode"
+                            title="{{ t('nav.toggle_dark_mode') }}"
                             class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                         <svg id="icon-sun" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.95 2.636a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zm-3.05 4.95a1 1 0 01-1.414 0l-.707-.707a1 1 0 011.414-1.414l.707.707a1 1 0 010 1.414zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zm-4.95-2.636a1 1 0 010-1.414l.707-.707a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414 0zM3 10a1 1 0 011-1h1a1 1 0 010 2H4a1 1 0 01-1-1zm3.05-4.95a1 1 0 011.414 0l.707.707A1 1 0 016.757 7.17l-.707-.707a1 1 0 010-1.414zM10 6a4 4 0 100 8 4 4 0 000-8z" clip-rule="evenodd"/>
@@ -88,30 +107,30 @@
                              class="hidden absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50">
                             <div class="py-1">
                                 <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
-                                    Signed in as <span class="font-medium text-gray-700 dark:text-gray-200">{{ user.username }}</span>
+                                    {{ t("nav.signed_in_as") }} <span class="font-medium text-gray-700 dark:text-gray-200">{{ user.username }}</span>
                                 </div>
                                 <a href="/events/"
                                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    My Events
+                                    {{ t("nav.my_events") }}
                                 </a>
                                 <a href="/account/"
                                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    My Account
+                                    {{ t("nav.my_account") }}
                                 </a>
                                 {% if user.is_admin %}
                                 <a href="/admin/"
                                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    Admin Panel
+                                    {{ t("nav.admin_panel") }}
                                 </a>
                                 <a href="/admin/settings"
                                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    Admin Settings
+                                    {{ t("nav.admin_settings") }}
                                 </a>
                                 {% endif %}
                                 <div class="border-t border-gray-100 dark:border-gray-700"></div>
                                 <a href="/auth/logout"
                                    class="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    Sign out
+                                    {{ t("nav.sign_out") }}
                                 </a>
                             </div>
                         </div>
@@ -120,11 +139,11 @@
                     <!-- Login / Signup buttons -->
                     <a href="/auth/login"
                        class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md transition-colors">
-                        Log in
+                        {{ t("nav.sign_in") }}
                     </a>
                     <a href="/auth/signup"
                        class="text-sm font-medium bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white px-4 py-2 rounded-md transition-colors">
-                        Sign up
+                        {{ t("nav.sign_up") }}
                     </a>
                     {% endif %}
 
@@ -145,26 +164,26 @@
                 {% if user %}
                 <a href="/events/"
                    class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    My Events
+                    {{ t("nav.my_events") }}
                 </a>
                 {% if user.is_admin %}
                 <a href="/admin/"
                    class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Admin Panel
+                    {{ t("nav.admin_panel") }}
                 </a>
                 {% endif %}
                 <a href="/auth/logout"
                    class="block px-3 py-2 rounded-md text-sm font-medium text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Sign out
+                    {{ t("nav.sign_out") }}
                 </a>
                 {% else %}
                 <a href="/auth/login"
                    class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Log in
+                    {{ t("nav.sign_in") }}
                 </a>
                 <a href="/auth/signup"
                    class="block px-3 py-2 rounded-md text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Sign up
+                    {{ t("nav.sign_up") }}
                 </a>
                 {% endif %}
             </div>
@@ -181,7 +200,7 @@
          {% else %}bg-red-50 dark:bg-red-900/30 border-red-400 text-red-800 dark:text-red-200{% endif %}">
         <div class="flex items-center gap-2">
             {% if flash.type == 'success' %}<span class="text-base">✅</span>{% elif flash.type == 'warning' %}<span class="text-base">⚠️</span>{% elif flash.type == 'info' %}<span class="text-base">ℹ️</span>{% else %}<span class="text-base">❌</span>{% endif %}
-            <span class="text-sm font-medium">{{ flash.message }}</span>
+            <span class="text-sm font-medium">{{ t(flash.key) if flash.key else flash.message }}</span>
         </div>
         <button onclick="document.getElementById('flash-message').remove()"
                 class="ml-4 opacity-60 hover:opacity-100 text-lg leading-none flex-shrink-0">&times;</button>
@@ -198,12 +217,12 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                    &copy; EventDrop — Share your event moments
+                    &copy; {{ t("footer.tagline") }}
                 </p>
                 <div class="flex space-x-4 text-sm text-gray-400 dark:text-gray-500">
-                    <a href="/" class="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Home</a>
+                    <a href="/" class="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">{{ t("footer.home") }}</a>
                     {% if user %}
-                    <a href="/events/" class="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Events</a>
+                    <a href="/events/" class="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">{{ t("footer.events") }}</a>
                     {% endif %}
                 </div>
             </div>

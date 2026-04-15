@@ -10,14 +10,11 @@ from eventdrop.database.session import get_db
 from eventdrop.database.models import User, Event, MediaFile, EventEmailConfig
 from eventdrop.services import user_service, event_service
 from eventdrop.storage import get_storage
+from eventdrop.utils.context import build_ctx
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 BASE_DIR = Path(__file__).parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-
-
-def admin_ctx(request, admin_user, **kwargs):
-    return {"user": admin_user, "settings": __import__("eventdrop.config", fromlist=["settings"]).settings, **kwargs}
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -39,8 +36,7 @@ async def dashboard(request: Request, admin=Depends(require_admin), db: AsyncSes
         .limit(5)
     )).scalars().all()
 
-    flash = request.session.pop("flash", None)
-    return templates.TemplateResponse(request, "admin/dashboard.html", admin_ctx(
+    return templates.TemplateResponse(request, "admin/dashboard.html", build_ctx(
         request, admin,
         users_count=users_count,
         events_count=events_count,
@@ -48,15 +44,13 @@ async def dashboard(request: Request, admin=Depends(require_admin), db: AsyncSes
         total_size=total_size,
         email_configs_count=email_configs_count,
         recent_polls=recent_polls,
-        flash=flash,
     ))
 
 
 @router.get("/events", response_class=HTMLResponse)
 async def admin_events(request: Request, admin=Depends(require_admin), db: AsyncSession = Depends(get_db)):
     events = await event_service.list_all_events(db)
-    flash = request.session.pop("flash", None)
-    return templates.TemplateResponse(request, "admin/events.html", admin_ctx(request, admin, events=events, flash=flash))
+    return templates.TemplateResponse(request, "admin/events.html", build_ctx(request, admin, events=events))
 
 
 @router.get("/events/{event_id}", response_class=HTMLResponse)
@@ -76,9 +70,8 @@ async def admin_event_detail(event_id: str, request: Request, admin=Depends(requ
         url = await storage.get_url(mf.stored_path)
         thumb_url = await storage.get_url(mf.thumb_path) if mf.thumb_path else None
         media_with_urls.append({"media": mf, "url": url, "thumb_url": thumb_url})
-    flash = request.session.pop("flash", None)
-    return templates.TemplateResponse(request, "admin/event_detail.html", admin_ctx(
-        request, admin, event=event, media_with_urls=media_with_urls, flash=flash
+    return templates.TemplateResponse(request, "admin/event_detail.html", build_ctx(
+        request, admin, event=event, media_with_urls=media_with_urls
     ))
 
 
@@ -87,15 +80,14 @@ async def admin_delete_event(event_id: str, request: Request, admin=Depends(requ
     storage = get_storage()
     await event_service.delete_event(db, event_id, storage)
     await db.commit()
-    request.session["flash"] = {"type": "success", "message": "Event deleted successfully."}
+    request.session["flash"] = {"type": "success", "key": "flash.event_deleted"}
     return RedirectResponse(url="/admin/events", status_code=303)
 
 
 @router.get("/users", response_class=HTMLResponse)
 async def admin_users(request: Request, admin=Depends(require_admin), db: AsyncSession = Depends(get_db)):
     users = await user_service.list_users(db)
-    flash = request.session.pop("flash", None)
-    return templates.TemplateResponse(request, "admin/users.html", admin_ctx(request, admin, users=users, flash=flash))
+    return templates.TemplateResponse(request, "admin/users.html", build_ctx(request, admin, users=users))
 
 
 @router.post("/users/{user_id}/delete")
@@ -104,7 +96,7 @@ async def admin_delete_user(user_id: str, request: Request, admin=Depends(requir
         raise HTTPException(status_code=400, detail="Cannot delete your own account")
     await user_service.delete_user(db, user_id)
     await db.commit()
-    request.session["flash"] = {"type": "success", "message": "User deleted."}
+    request.session["flash"] = {"type": "success", "key": "flash.user_deleted"}
     return RedirectResponse(url="/admin/users", status_code=303)
 
 
@@ -124,9 +116,8 @@ async def admin_toggle_admin(user_id: str, request: Request, admin=Depends(requi
 async def admin_settings(request: Request, admin=Depends(require_admin), db: AsyncSession = Depends(get_db)):
     from eventdrop.services.settings_service import get_setting
     allow_registration = (await get_setting(db, "allow_registration")) == "true"
-    flash = request.session.pop("flash", None)
-    return templates.TemplateResponse(request, "admin/settings.html", admin_ctx(
-        request, admin, allow_registration=allow_registration, flash=flash
+    return templates.TemplateResponse(request, "admin/settings.html", build_ctx(
+        request, admin, allow_registration=allow_registration
     ))
 
 
@@ -140,5 +131,5 @@ async def admin_settings_post(
     from eventdrop.services.settings_service import set_setting
     await set_setting(db, "allow_registration", "true" if allow_registration else "false")
     await db.commit()
-    request.session["flash"] = {"type": "success", "message": "Settings saved."}
+    request.session["flash"] = {"type": "success", "key": "flash.settings_saved"}
     return RedirectResponse(url="/admin/settings", status_code=303)

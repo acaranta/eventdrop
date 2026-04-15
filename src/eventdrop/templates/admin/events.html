@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Admin — All Events — EventDrop{% endblock %}
+{% block title %}{{ t("admin.events.title") }}{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -7,14 +7,14 @@
     <div class="flex items-center justify-between mb-6">
         <div>
             <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
-                <a href="/admin/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Dashboard</a>
+                <a href="/admin/" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{{ t("common.dashboard") }}</a>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
                 </svg>
-                <span>Events</span>
+                <span>{{ t("admin.events.heading") }}</span>
             </div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                All Events
+                {{ t("admin.events.heading") }}
                 <span class="ml-2 text-base font-normal text-gray-400 dark:text-gray-500">({{ events|length }})</span>
             </h1>
         </div>
@@ -26,12 +26,12 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700/50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Owner</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_name") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_owner") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_status") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_email") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_created") }}</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_actions") }}</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -61,11 +61,11 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if event.is_active %}
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
-                                Active
+                                {{ t("common.active") }}
                             </span>
                             {% else %}
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                                Closed
+                                {{ t("common.closed") }}
                             </span>
                             {% endif %}
                         </td>
@@ -73,7 +73,7 @@
                             {% if event.email_config and event.email_config.is_enabled %}
                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
                                   title="{{ event.email_config.email_address }}">
-                                📧 Enabled
+                                📧 {{ t("admin.events.email_enabled") }}
                             </span>
                             {% else %}
                             <span class="text-gray-300 dark:text-gray-600 text-xs">—</span>
@@ -86,13 +86,13 @@
                             <div class="flex items-center justify-end gap-2">
                                 <a href="/admin/events/{{ event.id }}"
                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-lg transition-colors">
-                                    View
+                                    {{ t("admin.events.btn_view") }}
                                 </a>
                                 <form method="post" action="/admin/events/{{ event.id }}/delete" class="inline"
-                                      onsubmit="return confirm('Delete event &quot;{{ event.name }}&quot; and all its media? This cannot be undone.')">
+                                      onsubmit="return confirm({{ t('admin.events.delete_confirm').replace('{name}', event.name) | tojson }})">
                                     <button type="submit"
                                             class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors">
-                                        Delete
+                                        {{ t("admin.events.btn_delete") }}
                                     </button>
                                 </form>
                             </div>
@@ -104,7 +104,7 @@
                             <svg class="mx-auto w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5"/>
                             </svg>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">No events found.</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("admin.events.no_events") }}</p>
                         </td>
                     </tr>
                     {% endfor %}
