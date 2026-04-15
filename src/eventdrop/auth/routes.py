@@ -290,7 +290,6 @@ if settings.is_oidc_configured():
             return RedirectResponse(url="/auth/login", status_code=302)
 
         userinfo = token.get("userinfo") or await oauth.oidc.userinfo(token=token)
-        logger.debug("OIDC userinfo claims: %s", list(userinfo.keys()) if userinfo else None)
 
         subject = userinfo.get("sub")
         email = userinfo.get("email") or ""
@@ -299,6 +298,14 @@ if settings.is_oidc_configured():
             or userinfo.get("name")
             or (email.split("@")[0] if email else None)
             or subject
+        )
+        logger.info(
+            "OIDC login: sub=%s preferred_username=%s name=%s email=%s → resolved username=%s",
+            subject,
+            userinfo.get("preferred_username"),
+            userinfo.get("name"),
+            email or "(empty)",
+            preferred_username,
         )
 
         # Look up existing user by OIDC subject
