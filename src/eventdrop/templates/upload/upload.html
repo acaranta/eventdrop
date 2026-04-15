@@ -179,6 +179,19 @@
         {% endif %}
     </div>
     {% endif %}
+
+    {% if event.is_gallery_public or (user and (user.is_admin or user.id == event.owner_id)) %}
+    <!-- Gallery link — visible to anyone who can access the gallery -->
+    <div class="mt-6 text-center">
+        <a href="/e/{{ event.id }}/gallery/"
+           class="inline-flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21h18M2.25 3h19.5M3.75 3v.75A.75.75 0 003 4.5H2.25m19.5 0H21a.75.75 0 00-.75.75V3M3.75 21V4.5"/>
+            </svg>
+            {{ t("upload.view_gallery") }}
+        </a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 
