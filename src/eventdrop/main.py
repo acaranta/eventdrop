@@ -125,7 +125,6 @@ async def root(request: Request):
     from sqlalchemy import select
     from eventdrop.database.engine import AsyncSessionLocal
     from eventdrop.database.models import User as UserModel
-    from eventdrop.services.settings_service import get_setting
     from eventdrop.utils.context import build_ctx
 
     user = None
@@ -134,7 +133,6 @@ async def root(request: Request):
         if user_id:
             result = await session.execute(select(UserModel).where(UserModel.id == user_id))
             user = result.scalar_one_or_none()
-        allow_registration = (await get_setting(session, "allow_registration")) == "true"
 
     if user:
         from fastapi.responses import RedirectResponse
@@ -143,7 +141,7 @@ async def root(request: Request):
     return templates.TemplateResponse(
         request,
         "index.html",
-        build_ctx(request, user=None, allow_registration=allow_registration),
+        await build_ctx(request, user=None),
     )
 
 
@@ -153,7 +151,7 @@ async def not_found(request: Request, exc):
     return templates.TemplateResponse(
         request,
         "errors/404.html",
-        build_ctx(request, user=None),
+        await build_ctx(request, user=None),
         status_code=404,
     )
 
@@ -164,6 +162,6 @@ async def server_error(request: Request, exc):
     return templates.TemplateResponse(
         request,
         "errors/500.html",
-        build_ctx(request, user=None),
+        await build_ctx(request, user=None),
         status_code=500,
     )

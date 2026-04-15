@@ -22,12 +22,12 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 @router.get("/", response_class=HTMLResponse)
 async def my_events(request: Request, user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     events = await event_service.list_events_by_owner(db, str(user.id))
-    return templates.TemplateResponse(request, "events/my_events.html", build_ctx(request, user, events=events))
+    return templates.TemplateResponse(request, "events/my_events.html", await build_ctx(request, user, events=events))
 
 
 @router.get("/create", response_class=HTMLResponse)
 async def create_event_form(request: Request, user=Depends(get_current_user)):
-    return templates.TemplateResponse(request, "events/create_event.html", build_ctx(request, user))
+    return templates.TemplateResponse(request, "events/create_event.html", await build_ctx(request, user))
 
 
 @router.post("/create")
@@ -97,7 +97,7 @@ async def edit_event_form(event_id: str, request: Request, user=Depends(get_curr
     )
     contributors = [{"email": row.uploader_email, "count": row.count} for row in contrib_result]
 
-    return templates.TemplateResponse(request, "events/edit_event.html", build_ctx(
+    return templates.TemplateResponse(request, "events/edit_event.html", await build_ctx(
         request, user, event=event, upload_url=upload_url, qr_code=qr_code, stats=stats,
         contributors=contributors
     ))

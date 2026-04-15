@@ -37,7 +37,7 @@ async def login_get(
     return templates.TemplateResponse(
         request,
         "auth/login.html",
-        build_ctx(
+        await build_ctx(
             request,
             user=None,
             oidc_enabled=settings.is_oidc_configured(),
@@ -62,7 +62,7 @@ async def login_post(
         return templates.TemplateResponse(
             request,
             "auth/login.html",
-            build_ctx(
+            await build_ctx(
                 request,
                 user=None,
                 error_key="flash.login_error",
@@ -83,7 +83,7 @@ async def signup_get(request: Request, db: AsyncSession = Depends(get_db)):
     return templates.TemplateResponse(
         request,
         "auth/signup.html",
-        build_ctx(request, user=None, registration_allowed=reg_allowed),
+        await build_ctx(request, user=None, registration_allowed=reg_allowed),
     )
 
 
@@ -102,7 +102,7 @@ async def signup_post(
         return templates.TemplateResponse(
             request,
             "auth/signup.html",
-            build_ctx(request, user=None, error_key="flash.registration_disabled"),
+            await build_ctx(request, user=None, error_key="flash.registration_disabled"),
             status_code=403,
         )
 
@@ -111,7 +111,7 @@ async def signup_post(
         return templates.TemplateResponse(
             request,
             "auth/signup.html",
-            build_ctx(request, user=None, error_key="flash.signup_error_short"),
+            await build_ctx(request, user=None, error_key="flash.signup_error_short"),
             status_code=400,
         )
 
@@ -120,7 +120,7 @@ async def signup_post(
         return templates.TemplateResponse(
             request,
             "auth/signup.html",
-            build_ctx(request, user=None, error_key="flash.signup_error_password"),
+            await build_ctx(request, user=None, error_key="flash.signup_error_password"),
             status_code=400,
         )
 
@@ -131,7 +131,7 @@ async def signup_post(
         return templates.TemplateResponse(
             request,
             "auth/signup.html",
-            build_ctx(request, user=None, error_key="flash.signup_error_exists"),
+            await build_ctx(request, user=None, error_key="flash.signup_error_exists"),
             status_code=400,
         )
 
@@ -159,7 +159,7 @@ async def logout(request: Request):
 
 @router.get("/forgot-password", response_class=HTMLResponse)
 async def forgot_password_get(request: Request):
-    return templates.TemplateResponse(request, "auth/forgot_password.html", build_ctx(request))
+    return templates.TemplateResponse(request, "auth/forgot_password.html", await build_ctx(request))
 
 
 @router.post("/forgot-password")
@@ -196,7 +196,7 @@ async def forgot_password_post(
 async def reset_password_get(request: Request, token: str = ""):
     if not token:
         return RedirectResponse(url="/auth/login", status_code=302)
-    return templates.TemplateResponse(request, "auth/reset_password.html", build_ctx(request, token=token))
+    return templates.TemplateResponse(request, "auth/reset_password.html", await build_ctx(request, token=token))
 
 
 @router.post("/reset-password")
@@ -213,14 +213,14 @@ async def reset_password_post(
         return templates.TemplateResponse(
             request,
             "auth/reset_password.html",
-            build_ctx(request, token=token, error_key="flash.password_error_short"),
+            await build_ctx(request, token=token, error_key="flash.password_error_short"),
             status_code=400,
         )
     if password != confirm_password:
         return templates.TemplateResponse(
             request,
             "auth/reset_password.html",
-            build_ctx(request, token=token, error_key="flash.password_error_match"),
+            await build_ctx(request, token=token, error_key="flash.password_error_match"),
             status_code=400,
         )
 
@@ -234,7 +234,7 @@ async def reset_password_post(
         return templates.TemplateResponse(
             request,
             "auth/reset_password.html",
-            build_ctx(request, token=token, error_key="flash.reset_expired"),
+            await build_ctx(request, token=token, error_key="flash.reset_expired"),
             status_code=400,
         )
 
@@ -244,7 +244,7 @@ async def reset_password_post(
         return templates.TemplateResponse(
             request,
             "auth/reset_password.html",
-            build_ctx(request, token=token, error_key="flash.reset_expired"),
+            await build_ctx(request, token=token, error_key="flash.reset_expired"),
             status_code=400,
         )
 

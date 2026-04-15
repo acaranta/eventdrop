@@ -92,7 +92,7 @@ async def gallery_page(
             "message_is_public": mf.message_is_public,
         })
 
-    return templates.TemplateResponse(request, "gallery/gallery.html", build_ctx(
+    return templates.TemplateResponse(request, "gallery/gallery.html", await build_ctx(
         request, auth_user,
         event=event,
         media_with_urls=media_with_urls,

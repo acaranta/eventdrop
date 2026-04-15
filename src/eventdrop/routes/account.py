@@ -18,7 +18,7 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 @router.get("/", response_class=HTMLResponse)
 async def account_page(request: Request, user=Depends(get_current_user)):
-    return templates.TemplateResponse(request, "account/index.html", build_ctx(request, user))
+    return templates.TemplateResponse(request, "account/index.html", await build_ctx(request, user))
 
 
 @router.post("/change-password")
@@ -36,15 +36,15 @@ async def change_password(
 
     if not verify_password(current_password, user.password_hash):
         return templates.TemplateResponse(request, "account/index.html",
-            build_ctx(request, user, error_key="flash.password_error_current"))
+            await build_ctx(request, user, error_key="flash.password_error_current"))
 
     if len(new_password) < 8:
         return templates.TemplateResponse(request, "account/index.html",
-            build_ctx(request, user, error_key="flash.password_error_short"))
+            await build_ctx(request, user, error_key="flash.password_error_short"))
 
     if new_password != confirm_password:
         return templates.TemplateResponse(request, "account/index.html",
-            build_ctx(request, user, error_key="flash.password_error_match"))
+            await build_ctx(request, user, error_key="flash.password_error_match"))
 
     user.password_hash = hash_password(new_password)
     await db.commit()

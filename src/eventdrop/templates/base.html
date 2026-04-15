@@ -141,10 +141,12 @@
                        class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md transition-colors">
                         {{ t("nav.sign_in") }}
                     </a>
+                    {% if allow_registration %}
                     <a href="/auth/signup"
                        class="text-sm font-medium bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white px-4 py-2 rounded-md transition-colors">
                         {{ t("nav.sign_up") }}
                     </a>
+                    {% endif %}
                     {% endif %}
 
                     <!-- Mobile menu button -->
@@ -181,10 +183,12 @@
                    class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     {{ t("nav.sign_in") }}
                 </a>
+                {% if allow_registration %}
                 <a href="/auth/signup"
                    class="block px-3 py-2 rounded-md text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700">
                     {{ t("nav.sign_up") }}
                 </a>
+                {% endif %}
                 {% endif %}
             </div>
         </div>
