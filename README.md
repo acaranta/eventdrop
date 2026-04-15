@@ -472,6 +472,14 @@ EVENTDROP_OIDC_DISPLAY_NAME=Login with Keycloak
 
 EventDrop uses the `/.well-known/openid-configuration` discovery document from `EVENTDROP_OIDC_PROVIDER_URL` and requests the `openid email profile` scope.
 
+> **Important:** `EVENTDROP_BASE_URL` must be set to the public-facing URL of your EventDrop instance (e.g. `https://eventdrop.yourdomain.com`). The redirect URI sent to the OIDC provider is built as:
+>
+> ```
+> <EVENTDROP_BASE_URL>/auth/oidc/callback
+> ```
+>
+> This value must exactly match a `redirect_uri` registered in your OIDC client configuration. If `EVENTDROP_BASE_URL` is left at its default (`http://localhost:8000`) or set incorrectly, the provider will reject the authorization request with an `invalid_request` error stating that the redirect URI does not match.
+
 **Account linking behaviour:**
 
 1. If a user with the matching OIDC `sub` claim already exists, they are logged in directly.
@@ -495,6 +503,7 @@ identity_providers:
         public: false
         authorization_policy: one_factor  # change to two_factor to require MFA
         redirect_uris:
+          # Must match <EVENTDROP_BASE_URL>/auth/oidc/callback exactly
           - https://eventdrop.example.com/auth/oidc/callback
         scopes:
           - openid
@@ -510,6 +519,9 @@ identity_providers:
 Then configure EventDrop to point at your Authelia instance:
 
 ```dotenv
+# Must match the redirect_uris entry in the Authelia client config above
+# The redirect URI sent to Authelia will be: https://eventdrop.example.com/auth/oidc/callback
+EVENTDROP_BASE_URL=https://eventdrop.example.com
 EVENTDROP_OIDC_ENABLED=true
 # Authelia issuer base URL — no path suffix needed, discovery is automatic
 EVENTDROP_OIDC_PROVIDER_URL=https://auth.example.com
