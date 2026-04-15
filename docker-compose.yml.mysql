@@ -1,0 +1,64 @@
+services:
+  db:
+    image: mariadb:11
+    container_name: eventdrop_db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: "rootpassword"
+      MARIADB_DATABASE: "eventdrop"
+      MARIADB_USER: "eventdrop"
+      MARIADB_PASSWORD: "dbpassword"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  eventdrop:
+    image: acaranta/eventdrop:latest
+    container_name: eventdrop
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - eventdrop_data:/data
+    environment:
+      EVENTDROP_ADMIN_USERNAME: "admin"
+      EVENTDROP_ADMIN_PASSWORD: "changeme"
+      EVENTDROP_SECRET_KEY: "change-this-to-a-long-random-secret"
+      # Database — MariaDB/MySQL
+      EVENTDROP_DB_TYPE: "mysql"
+      EVENTDROP_DB_HOST: "db"
+      EVENTDROP_DB_PORT: "3306"
+      EVENTDROP_DB_NAME: "eventdrop"
+      EVENTDROP_DB_USER: "eventdrop"
+      EVENTDROP_DB_PASSWORD: "dbpassword"
+      # Storage
+      EVENTDROP_STORAGE_TYPE: "local"
+      EVENTDROP_STORAGE_LOCAL_PATH: "/data/media"
+      # General
+      EVENTDROP_BASE_URL: "http://localhost:8000"
+      EVENTDROP_MAX_UPLOAD_SIZE_MB: "500"
+      EVENTDROP_ARCHIVE_TEMP_PATH: "/data/tmp"
+      EVENTDROP_ARCHIVE_EXPIRY_MINUTES: "15"
+      # Email ingestion
+      EVENTDROP_EMAIL_INGESTION_ENABLED: "true"
+      EVENTDROP_EMAIL_POLL_INTERVAL_SECONDS: "120"
+      # SMTP (required for password reset emails)
+      # EVENTDROP_SMTP_HOST: "smtp.example.com"
+      # EVENTDROP_SMTP_PORT: "587"
+      # EVENTDROP_SMTP_USERNAME: "user@example.com"
+      # EVENTDROP_SMTP_PASSWORD: "yourpassword"
+      # EVENTDROP_SMTP_FROM: "eventdrop@example.com"
+      # EVENTDROP_SMTP_TLS: "true"
+      # EVENTDROP_ADMIN_EMAIL: "admin@example.com"
+
+volumes:
+  db_data:
+  eventdrop_data:
