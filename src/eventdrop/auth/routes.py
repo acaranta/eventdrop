@@ -307,14 +307,6 @@ if settings.is_oidc_configured():
             or (email.split("@")[0] if email else None)
             or subject
         )
-        logger.info(
-            "OIDC login: sub=%s preferred_username=%s name=%s email=%s → resolved username=%s",
-            subject,
-            userinfo.get("preferred_username"),
-            userinfo.get("name"),
-            email or "(empty)",
-            preferred_username,
-        )
 
         # Look up existing user by OIDC subject
         result = await db.execute(select(User).where(User.oidc_subject == subject))
