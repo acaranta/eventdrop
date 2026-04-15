@@ -267,7 +267,7 @@ if settings.is_oidc_configured():
         oauth = get_oauth()
         if oauth is None:
             return RedirectResponse(url="/auth/login", status_code=302)
-        redirect_uri = str(request.url_for("oidc_callback"))
+        redirect_uri = settings.base_url.rstrip("/") + "/auth/oidc/callback"
         return await oauth.oidc.authorize_redirect(request, redirect_uri)
 
     @router.get("/oidc/callback", name="oidc_callback")
