@@ -289,7 +289,15 @@ if settings.is_oidc_configured():
             request.session["flash"] = {"type": "error", "message": "OIDC login failed. Please try again."}
             return RedirectResponse(url="/auth/login", status_code=302)
 
-        userinfo = token.get("userinfo") or await oauth.oidc.userinfo(token=token)
+        # Merge ID token claims with userinfo endpoint claims.
+        # Authelia (and some providers) only return profile/email claims from the
+        # userinfo endpoint, not in the ID token — so we must call both and merge.
+        id_token_claims = token.get("userinfo") or {}
+        try:
+            userinfo_claims = await oauth.oidc.userinfo(token=token)
+        except Exception:
+            userinfo_claims = {}
+        userinfo = {**id_token_claims, **userinfo_claims}
 
         subject = userinfo.get("sub")
         email = userinfo.get("email") or ""
