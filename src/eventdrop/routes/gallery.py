@@ -22,6 +22,7 @@ async def gallery_page(
     db: AsyncSession = Depends(get_db),
     uploader_filter: Optional[str] = Query(None, alias="uploader"),
     source_filter: Optional[str] = Query(None, alias="source"),
+    gps_only: Optional[str] = Query(None, alias="gps"),  # "1" to show only GPS-tagged media
     sort_by: Optional[str] = Query("exif", alias="sort"),    # exif | upload
     sort_order: Optional[str] = Query("desc", alias="order"),  # desc | asc
 ):
@@ -50,6 +51,8 @@ async def gallery_page(
         query = query.where(MediaFile.uploader_email == uploader_filter)
     if source_filter in ("upload", "email"):
         query = query.where(MediaFile.source == source_filter)
+    if gps_only:
+        query = query.where(MediaFile.gps_lat.isnot(None))
 
     # Sorting: exif uses COALESCE(file_datetime, uploaded_at); upload uses uploaded_at only
     if sort_by == "upload":
@@ -108,6 +111,7 @@ async def gallery_page(
         contributors=contributors,
         uploader_filter=uploader_filter,
         source_filter=source_filter,
+        gps_filter=bool(gps_only),
         sort_by=sort_by if sort_by in ("exif", "upload") else "exif",
         sort_order=sort_order if sort_order in ("asc", "desc") else "desc",
     ))

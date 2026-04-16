@@ -2,6 +2,11 @@
 {% block title %}{{ t("gallery.title").replace("{name}", event.name) }}{% endblock %}
 
 {% block content %}
+{%- macro qp(uploader=uploader_filter, source=source_filter, gps=gps_filter, sort=sort_by, order=sort_order) -%}
+{%- if uploader %}uploader={{ uploader }}&{%- endif -%}
+{%- if source %}source={{ source }}&{%- endif -%}
+{%- if gps %}gps=1&{%- endif -%}sort={{ sort }}&order={{ order -}}
+{%- endmacro -%}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -54,7 +59,7 @@
     </div>
 
     {# ---- Filter / sort bar — always visible when the gallery has any content ---- #}
-    {% set filters_active = uploader_filter or source_filter %}
+    {% set filters_active = uploader_filter or source_filter or gps_filter %}
     {% if contributors %}
     <div class="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4">
         <div class="flex flex-wrap items-center gap-3">
@@ -77,26 +82,34 @@
             {# Source toggle #}
             <div class="flex items-center gap-1">
                 <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1 whitespace-nowrap">{{ t("gallery.filter_type_label") }}</span>
-                <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}"
+                <a href="?{{ qp(source=None) }}"
                    class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if not source_filter %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}">
                     {{ t("gallery.filter_all") }}
                 </a>
-                <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}source=upload"
+                <a href="?{{ qp(source='upload') }}"
                    class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if source_filter == 'upload' %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}"
                    title="{{ t('gallery.source_upload') }}">⬆️</a>
-                <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}source=email"
+                <a href="?{{ qp(source='email') }}"
                    class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if source_filter == 'email' %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}"
                    title="{{ t('gallery.source_email') }}">📧</a>
+            </div>
+
+            {# GPS filter toggle #}
+            <div class="flex items-center gap-1">
+                <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1 whitespace-nowrap">GPS:</span>
+                <a href="?{{ qp(gps=not gps_filter) }}"
+                   class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if gps_filter %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}"
+                   title="Show only media with GPS location">🗺️</a>
             </div>
 
             {# Sort controls #}
             <div class="flex items-center gap-1 flex-wrap">
                 <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1 whitespace-nowrap">Sort:</span>
-                <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}{% if source_filter %}source={{ source_filter }}&{% endif %}sort=exif&order={{ sort_order }}"
+                <a href="?{{ qp(sort='exif') }}"
                    class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if sort_by == 'exif' %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}">📅 EXIF</a>
-                <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}{% if source_filter %}source={{ source_filter }}&{% endif %}sort=upload&order={{ sort_order }}"
+                <a href="?{{ qp(sort='upload') }}"
                    class="px-2.5 py-1 text-xs rounded-lg border transition-colors {% if sort_by == 'upload' %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400{% endif %}">⬆️ Upload</a>
-                <a href="?{% if uploader_filter %}uploader={{ uploader_filter }}&{% endif %}{% if source_filter %}source={{ source_filter }}&{% endif %}sort={{ sort_by }}&order={% if sort_order == 'desc' %}asc{% else %}desc{% endif %}"
+                <a href="?{{ qp(order='asc' if sort_order == 'desc' else 'desc') }}"
                    class="px-2.5 py-1 text-xs rounded-lg border transition-colors bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400">{% if sort_order == 'desc' %}↓ Desc{% else %}↑ Asc{% endif %}</a>
             </div>
 
@@ -122,6 +135,11 @@
                 {% if source_filter == 'email' %}📧 {{ t("gallery.filter_email") }}{% else %}⬆️ {{ t("gallery.filter_web") }}{% endif %}
             </span>
             {% endif %}
+            {% if gps_filter %}
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full">
+                🗺️ GPS
+            </span>
+            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -143,7 +161,7 @@
         </summary>
         <div class="px-4 pb-4 pt-1 flex flex-wrap gap-2">
             {% for contrib in contributors %}
-            <a href="?uploader={{ contrib.email }}"
+            <a href="?{{ qp(uploader=contrib.email) }}"
                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-colors
                       {% if uploader_filter == contrib.email %}bg-indigo-600 text-white border-indigo-600{% else %}bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500{% endif %}"
                title="{% if is_owner %}{{ contrib.email }}{% else %}{{ contrib.email | anonymize_email }}{% endif %}">
