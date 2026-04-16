@@ -73,13 +73,21 @@
 
                 <!-- Right side -->
                 <div class="flex items-center space-x-2">
-                    <!-- Language selector -->
-                    <div class="flex items-center gap-0.5">
-                        {% for code in supported_langs %}
-                        <a href="/set-lang?lang={{ code }}&next={{ request.url.path }}"
-                           class="text-base px-1 py-0.5 rounded transition-colors {% if lang == code %}ring-1 ring-indigo-400 bg-indigo-50 dark:bg-indigo-900/40{% else %}opacity-60 hover:opacity-100{% endif %}"
-                           title="{{ code | upper }}">{{ lang_flags[code] }}</a>
-                        {% endfor %}
+                    <!-- Language selector dropdown -->
+                    <div class="relative" id="lang-dropdown">
+                        <button type="button"
+                                class="text-base px-1 py-0.5 rounded transition-colors ring-1 ring-indigo-400 bg-indigo-50 dark:bg-indigo-900/40"
+                                title="{{ lang | upper }}">{{ lang_flags[lang] }}</button>
+                        <div id="lang-menu"
+                             class="hidden absolute right-0 top-full mt-1 flex flex-col gap-0.5 bg-white dark:bg-gray-800 shadow-md rounded p-1 z-50">
+                            {% for code in supported_langs %}
+                            {% if code != lang %}
+                            <a href="/set-lang?lang={{ code }}&next={{ request.url.path }}"
+                               class="text-base px-1 py-0.5 rounded transition-colors opacity-60 hover:opacity-100"
+                               title="{{ code | upper }}">{{ lang_flags[code] }}</a>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
                     </div>
 
                     <!-- Dark mode toggle -->
@@ -268,6 +276,18 @@
         if (mobileMenuBtn) {
             mobileMenuBtn.addEventListener('click', function () {
                 mobileMenu.classList.toggle('hidden');
+            });
+        }
+
+        // Language dropdown
+        const langBtn = document.querySelector('#lang-dropdown button');
+        if (langBtn) {
+            langBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                document.getElementById('lang-menu').classList.toggle('hidden');
+            });
+            document.addEventListener('click', function () {
+                document.getElementById('lang-menu').classList.add('hidden');
             });
         }
 
