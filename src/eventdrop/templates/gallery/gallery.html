@@ -217,7 +217,7 @@
             <div class="relative aspect-square overflow-hidden flex-shrink-0">
                 <!-- Checkbox (always visible on mobile, hover on desktop) -->
                 {% if can_delete or can_download %}
-                <div class="absolute top-2 left-2 z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <div class="checkbox-wrapper absolute top-2 left-2 z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <input type="checkbox" class="media-checkbox h-5 w-5 text-indigo-600 border-gray-300 rounded shadow-sm cursor-pointer"
                            value="{{ item.id }}"
                            onclick="e => e.stopPropagation()"
@@ -519,13 +519,15 @@ function updateItemHighlight(cb) {
     if (!item) return;
     const overlay = item.querySelector('.media-selected-overlay');
     if (overlay) overlay.classList.toggle('hidden', !cb.checked);
-    if (cb.checked) {
-        cb.classList.add('opacity-100');
-        cb.classList.remove('sm:opacity-0', 'sm:group-hover:opacity-100');
-    } else {
-        cb.classList.remove('opacity-100');
-        cb.classList.add('sm:opacity-0', 'sm:group-hover:opacity-100');
-    }
+}
+
+function updateCheckboxVisibility() {
+    const anySelected = document.querySelectorAll('.media-checkbox:checked').length > 0;
+    document.querySelectorAll('.checkbox-wrapper').forEach(w => {
+        // Override CSS hover-only opacity with inline style when any item is selected;
+        // clear inline style to restore hover-only behaviour when nothing is selected.
+        w.style.opacity = anySelected ? '1' : '';
+    });
 }
 
 function updateToolbar() {
@@ -536,6 +538,7 @@ function updateToolbar() {
     if (toolbar) toolbar.classList.toggle('hidden', count === 0);
     if (countEl) countEl.textContent = count;
     if (labelEl) labelEl.textContent = count > 0 ? `${count} ${_t.selected}` : '';
+    updateCheckboxVisibility();
 }
 
 function clearSelection() {
