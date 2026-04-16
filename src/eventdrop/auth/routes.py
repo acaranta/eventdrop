@@ -4,7 +4,6 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -20,6 +19,7 @@ from eventdrop.auth.dependencies import get_current_user_optional
 from eventdrop.config import settings
 from eventdrop.utils.context import build_ctx
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 BASE_DIR = Path(__file__).parent.parent
