@@ -16,6 +16,8 @@ from eventdrop.templating import templates
 
 logger = logging.getLogger(__name__)
 
+BASE_DIR = Path(__file__).parent
+
 
 async def create_admin_user():
     """Create the admin user from environment variables on first run only."""
