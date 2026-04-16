@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, coalesce
+from sqlalchemy import select, func
+from sqlalchemy.sql.functions import coalesce
 from sqlalchemy.orm import selectinload
 from typing import Optional
 
