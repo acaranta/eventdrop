@@ -71,7 +71,7 @@
                         class="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="" {% if not uploader_filter %}selected{% endif %}>{{ t("gallery.filter_all_uploaders") }}</option>
                     {% for contrib in contributors %}
-                    <option value="{{ contrib.email }}" {% if uploader_filter == contrib.email %}selected{% endif %}>
+                    <option value="{{ contrib.hash }}" {% if uploader_filter == contrib.hash %}selected{% endif %}>
                         {% if is_owner %}{{ contrib.email }}{% else %}{{ contrib.email | anonymize_email }}{% endif %} ({{ contrib.count }})
                     </option>
                     {% endfor %}
@@ -125,9 +125,9 @@
         {% if filters_active %}
         <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-1 items-center text-xs text-gray-500 dark:text-gray-400">
             <span>{{ t("gallery.filtered_by").replace("{n}", media_with_urls|length|string) }}</span>
-            {% if uploader_filter %}
+            {% if uploader_filter and uploader_filter_email %}
             <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full">
-                👤 {% if is_owner %}{{ uploader_filter }}{% else %}{{ uploader_filter | anonymize_email }}{% endif %}
+                👤 {% if is_owner %}{{ uploader_filter_email }}{% else %}{{ uploader_filter_email | anonymize_email }}{% endif %}
             </span>
             {% endif %}
             {% if source_filter %}
@@ -161,15 +161,15 @@
         </summary>
         <div class="px-4 pb-4 pt-1 flex flex-wrap gap-2">
             {% for contrib in contributors %}
-            <a href="?{{ qp(uploader=contrib.email) }}"
+            <a href="?{{ qp(uploader=contrib.hash) }}"
                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-colors
-                      {% if uploader_filter == contrib.email %}bg-indigo-600 text-white border-indigo-600{% else %}bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500{% endif %}"
+                      {% if uploader_filter == contrib.hash %}bg-indigo-600 text-white border-indigo-600{% else %}bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500{% endif %}"
                title="{% if is_owner %}{{ contrib.email }}{% else %}{{ contrib.email | anonymize_email }}{% endif %}">
                 <span class="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-300 text-xs font-bold flex-shrink-0">
                     {{ contrib.email[0]|upper }}
                 </span>
                 <span class="truncate max-w-[160px]" title="{% if is_owner %}{{ contrib.email }}{% else %}{{ contrib.email | anonymize_email }}{% endif %}">{% if is_owner %}{{ contrib.email }}{% else %}{{ contrib.email | anonymize_email }}{% endif %}</span>
-                <span class="text-xs {% if uploader_filter == contrib.email %}text-indigo-200{% else %}text-gray-400 dark:text-gray-500{% endif %} ml-0.5">{{ contrib.count }}</span>
+                <span class="text-xs {% if uploader_filter == contrib.hash %}text-indigo-200{% else %}text-gray-400 dark:text-gray-500{% endif %} ml-0.5">{{ contrib.count }}</span>
             </a>
             {% endfor %}
         </div>

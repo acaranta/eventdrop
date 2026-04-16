@@ -12,6 +12,7 @@ from eventdrop.storage import get_storage
 from eventdrop.config import settings
 from eventdrop.utils.context import build_ctx
 from eventdrop.templating import templates
+from eventdrop.services.media_service import email_hash
 
 router = APIRouter(tags=["gallery"])
 
@@ -46,10 +47,31 @@ async def gallery_page(
             raise HTTPException(status_code=302, headers={"Location": "/auth/login"})
         raise HTTPException(status_code=403, detail="Gallery is private")
 
+    # Build contributors list (always unfiltered — needed to resolve uploader hash before filtering)
+    contrib_result = await db.execute(
+        select(
+            MediaFile.uploader_email,
+            func.count(MediaFile.id).label("count")
+        )
+        .where(MediaFile.event_id == event_id)
+        .group_by(MediaFile.uploader_email)
+        .order_by(func.count(MediaFile.id).desc())
+    )
+    contributors = [
+        {"email": row.uploader_email, "count": row.count, "hash": email_hash(row.uploader_email)}
+        for row in contrib_result
+    ]
+
+    # Resolve uploader_filter (8-char hash) → actual email for DB query
+    uploader_email_resolved = None
+    if uploader_filter:
+        match = next((c for c in contributors if c["hash"] == uploader_filter), None)
+        uploader_email_resolved = match["email"] if match else None
+
     # Build filtered media query
     query = select(MediaFile).where(MediaFile.event_id == event_id)
-    if uploader_filter:
-        query = query.where(MediaFile.uploader_email == uploader_filter)
+    if uploader_email_resolved:
+        query = query.where(MediaFile.uploader_email == uploader_email_resolved)
     if source_filter in ("upload", "email"):
         query = query.where(MediaFile.source == source_filter)
     if gps_only:
@@ -63,18 +85,6 @@ async def gallery_page(
     query = query.order_by(sort_col.asc() if sort_order == "asc" else sort_col.desc())
     result = await db.execute(query)
     media_files = list(result.scalars().all())
-
-    # Build contributors list (always unfiltered)
-    contrib_result = await db.execute(
-        select(
-            MediaFile.uploader_email,
-            func.count(MediaFile.id).label("count")
-        )
-        .where(MediaFile.event_id == event_id)
-        .group_by(MediaFile.uploader_email)
-        .order_by(func.count(MediaFile.id).desc())
-    )
-    contributors = [{"email": row.uploader_email, "count": row.count} for row in contrib_result]
 
     storage = get_storage()
 
@@ -111,6 +121,7 @@ async def gallery_page(
         can_delete=bool(is_owner),
         contributors=contributors,
         uploader_filter=uploader_filter,
+        uploader_filter_email=uploader_email_resolved,
         source_filter=source_filter,
         gps_filter=bool(gps_only),
         sort_by=sort_by if sort_by in ("exif", "upload") else "exif",
