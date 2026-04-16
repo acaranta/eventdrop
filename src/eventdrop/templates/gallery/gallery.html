@@ -63,22 +63,6 @@
     {% if contributors %}
     <div class="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4">
         <div class="flex flex-wrap items-center gap-3">
-            {# Uploader dropdown #}
-            {% if contributors %}
-            <div class="flex items-center gap-2">
-                <label class="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ t("gallery.filter_uploader_label") }}</label>
-                <select onchange="if(this.value){const u=new URL(window.location);u.searchParams.set('uploader',this.value);{% if source_filter %}u.searchParams.set('source','{{ source_filter }}');{% else %}u.searchParams.delete('source');{% endif %}window.location=u;}else{const u=new URL(window.location);u.searchParams.delete('uploader');{% if source_filter %}u.searchParams.set('source','{{ source_filter }}');{% endif %}window.location=u;}"
-                        class="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="" {% if not uploader_filter %}selected{% endif %}>{{ t("gallery.filter_all_uploaders") }}</option>
-                    {% for contrib in contributors %}
-                    <option value="{{ contrib.hash }}" {% if uploader_filter == contrib.hash %}selected{% endif %}>
-                        {% if is_owner %}{{ contrib.email }}{% else %}{{ contrib.email | anonymize_email }}{% endif %} ({{ contrib.count }})
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            {% endif %}
-
             {# Source toggle #}
             <div class="flex items-center gap-1">
                 <span class="text-xs font-medium text-gray-500 dark:text-gray-400 mr-1 whitespace-nowrap">{{ t("gallery.filter_type_label") }}</span>
