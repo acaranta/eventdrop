@@ -25,7 +25,7 @@ async def gallery_page(
     source_filter: Optional[str] = Query(None, alias="source"),
     gps_only: Optional[str] = Query(None, alias="gps"),  # "1" to show only GPS-tagged media
     sort_by: Optional[str] = Query("exif", alias="sort"),    # exif | upload
-    sort_order: Optional[str] = Query("desc", alias="order"),  # desc | asc
+    sort_order: Optional[str] = Query("asc", alias="order"),   # asc | desc
 ):
     from eventdrop.auth.dependencies import get_current_user_optional
     auth_user = await get_current_user_optional(request, db)
@@ -114,5 +114,5 @@ async def gallery_page(
         source_filter=source_filter,
         gps_filter=bool(gps_only),
         sort_by=sort_by if sort_by in ("exif", "upload") else "exif",
-        sort_order=sort_order if sort_order in ("asc", "desc") else "desc",
+        sort_order=sort_order if sort_order in ("asc", "desc") else "asc",
     ))
