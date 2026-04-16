@@ -40,7 +40,10 @@ async def create_archive(
     for mf in media_files:
         try:
             file_obj = await storage.retrieve(mf.stored_path)
-            file_data_list.append((mf.original_filename, file_obj.read()))
+            # Prefix filename with datetime (EXIF if available, else upload time)
+            dt = mf.file_datetime or mf.uploaded_at
+            prefix = dt.strftime("%Y-%m-%d_%H%M%S_") if dt else ""
+            file_data_list.append((f"{prefix}{mf.original_filename}", file_obj.read()))
         except Exception as e:
             logger.warning(f"Could not retrieve {mf.stored_path}: {e}")
 

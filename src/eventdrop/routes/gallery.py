@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, coalesce
 from sqlalchemy.orm import selectinload
 from typing import Optional
 
@@ -22,6 +22,8 @@ async def gallery_page(
     db: AsyncSession = Depends(get_db),
     uploader_filter: Optional[str] = Query(None, alias="uploader"),
     source_filter: Optional[str] = Query(None, alias="source"),
+    sort_by: Optional[str] = Query("exif", alias="sort"),    # exif | upload
+    sort_order: Optional[str] = Query("desc", alias="order"),  # desc | asc
 ):
     from eventdrop.auth.dependencies import get_current_user_optional
     auth_user = await get_current_user_optional(request, db)
@@ -48,7 +50,13 @@ async def gallery_page(
         query = query.where(MediaFile.uploader_email == uploader_filter)
     if source_filter in ("upload", "email"):
         query = query.where(MediaFile.source == source_filter)
-    query = query.order_by(MediaFile.uploaded_at.desc())
+
+    # Sorting: exif uses COALESCE(file_datetime, uploaded_at); upload uses uploaded_at only
+    if sort_by == "upload":
+        sort_col = MediaFile.uploaded_at
+    else:  # exif (default)
+        sort_col = coalesce(MediaFile.file_datetime, MediaFile.uploaded_at)
+    query = query.order_by(sort_col.asc() if sort_order == "asc" else sort_col.desc())
     result = await db.execute(query)
     media_files = list(result.scalars().all())
 
@@ -100,4 +108,6 @@ async def gallery_page(
         contributors=contributors,
         uploader_filter=uploader_filter,
         source_filter=source_filter,
+        sort_by=sort_by if sort_by in ("exif", "upload") else "exif",
+        sort_order=sort_order if sort_order in ("asc", "desc") else "desc",
     ))
