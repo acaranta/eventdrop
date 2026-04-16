@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
-from pathlib import Path
 from typing import Optional
 
 from eventdrop.database.session import get_db
@@ -12,10 +10,9 @@ from eventdrop.database.models import Event, MediaFile
 from eventdrop.storage import get_storage
 from eventdrop.config import settings
 from eventdrop.utils.context import build_ctx
+from eventdrop.templating import templates
 
 router = APIRouter(tags=["gallery"])
-BASE_DIR = Path(__file__).parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
 @router.get("/e/{event_id}/gallery/", response_class=HTMLResponse)

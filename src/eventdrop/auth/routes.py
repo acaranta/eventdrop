@@ -7,8 +7,6 @@ from typing import Optional
 
 from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,12 +16,10 @@ from eventdrop.auth.passwords import hash_password, verify_password
 from eventdrop.auth.dependencies import get_current_user_optional
 from eventdrop.config import settings
 from eventdrop.utils.context import build_ctx
+from eventdrop.templating import templates
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-BASE_DIR = Path(__file__).parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
 @router.get("/login", response_class=HTMLResponse)

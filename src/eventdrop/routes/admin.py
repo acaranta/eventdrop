@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from pathlib import Path
 
 from eventdrop.auth.dependencies import require_admin
 from eventdrop.database.session import get_db
@@ -11,10 +9,9 @@ from eventdrop.database.models import User, Event, MediaFile, EventEmailConfig
 from eventdrop.services import user_service, event_service
 from eventdrop.storage import get_storage
 from eventdrop.utils.context import build_ctx
+from eventdrop.templating import templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-BASE_DIR = Path(__file__).parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
 @router.get("/", response_class=HTMLResponse)

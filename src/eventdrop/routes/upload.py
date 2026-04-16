@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, Request, Form, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
-from pathlib import Path
 
 from eventdrop.database.session import get_db
 from eventdrop.database.models import Event, EventEmailConfig
@@ -14,12 +12,11 @@ from eventdrop.services.media_service import (
 from eventdrop.storage import get_storage
 from eventdrop.config import settings
 from eventdrop.utils.context import build_ctx
+from eventdrop.templating import templates
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 router = APIRouter(tags=["upload"])
-BASE_DIR = Path(__file__).parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 COOKIE_NAME = "uploader_token"
 MAX_UPLOAD_BYTES = settings.max_upload_size_mb * 1024 * 1024
