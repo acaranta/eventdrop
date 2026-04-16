@@ -77,13 +77,52 @@ def extract_exif_datetime(data: bytes, mime_type: str) -> Optional[datetime]:
     return None
 
 
+def _dms_to_decimal(dms_values, ref: str) -> Optional[float]:
+    """Convert EXIF DMS (degrees/minutes/seconds) rational values to decimal degrees."""
+    try:
+        def ratio_to_float(r):
+            # exifread Ratio objects have num/den attributes
+            return float(r.num) / float(r.den) if float(r.den) != 0 else 0.0
+        degrees = ratio_to_float(dms_values[0])
+        minutes = ratio_to_float(dms_values[1])
+        seconds = ratio_to_float(dms_values[2])
+        decimal = degrees + minutes / 60 + seconds / 3600
+        if ref in ("S", "W"):
+            decimal = -decimal
+        return decimal
+    except Exception:
+        return None
+
+
+def extract_gps_coordinates(data: bytes, mime_type: str) -> tuple[Optional[float], Optional[float]]:
+    """Extract GPS latitude and longitude from image EXIF data."""
+    if not mime_type.startswith("image/"):
+        return None, None
+    try:
+        import exifread
+        tags = exifread.process_file(io.BytesIO(data), details=True)
+        lat_tag = tags.get("GPS GPSLatitude")
+        lat_ref = str(tags.get("GPS GPSLatitudeRef", "N"))
+        lon_tag = tags.get("GPS GPSLongitude")
+        lon_ref = str(tags.get("GPS GPSLongitudeRef", "E"))
+        if lat_tag and lon_tag:
+            lat = _dms_to_decimal(lat_tag.values, lat_ref)
+            lon = _dms_to_decimal(lon_tag.values, lon_ref)
+            return lat, lon
+    except Exception:
+        pass
+    return None, None
+
+
 def generate_thumbnail(data: bytes, mime_type: str) -> Optional[bytes]:
     """Generate a thumbnail for an image. Returns None for videos."""
     if not mime_type.startswith("image/"):
         return None
     try:
-        from PIL import Image
+        from PIL import Image, ImageOps
         img = Image.open(io.BytesIO(data))
+        # Apply EXIF orientation so thumbnails match the correct display orientation
+        img = ImageOps.exif_transpose(img)
         img.thumbnail((400, 400))
         # Convert RGBA/P to RGB for JPEG output
         if img.mode in ("RGBA", "P"):
@@ -109,6 +148,7 @@ async def store_media_file(
 ) -> MediaFile:
     """Store a media file and create/update the DB record."""
     file_datetime = extract_exif_datetime(file_data, mime_type)
+    gps_lat, gps_lon = extract_gps_coordinates(file_data, mime_type)
     stored_path = build_storage_path(event_id, uploader_email, original_filename, file_datetime)
     thumb_path = build_storage_path(event_id, uploader_email, original_filename, file_datetime, prefix="thumb_")
 
@@ -151,6 +191,8 @@ async def store_media_file(
         existing.file_size = len(file_data)
         existing.mime_type = mime_type
         existing.file_datetime = file_datetime
+        existing.gps_lat = gps_lat
+        existing.gps_lon = gps_lon
         existing.uploaded_at = datetime.now(timezone.utc)
         existing.checksum = checksum
         existing.source = source
@@ -170,6 +212,8 @@ async def store_media_file(
             file_size=len(file_data),
             mime_type=mime_type,
             file_datetime=file_datetime,
+            gps_lat=gps_lat,
+            gps_lon=gps_lon,
             checksum=checksum,
             source=source,
             upload_message=sanitize_message(upload_message) if upload_message else None,

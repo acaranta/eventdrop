@@ -7,6 +7,7 @@ from sqlalchemy import (
     Boolean,
     Integer,
     BigInteger,
+    Float,
     Text,
     DateTime,
     ForeignKey,
@@ -114,6 +115,8 @@ class MediaFile(Base):
     source: Mapped[str] = mapped_column(String(50), nullable=False, default="upload")
     upload_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     message_is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    gps_lat: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    gps_lon: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     # Relationships
     event: Mapped["Event"] = relationship("Event", back_populates="media_files")

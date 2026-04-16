@@ -90,6 +90,7 @@ async def gallery_page(
             "uploader_email": mf.uploader_email,
             "upload_message": mf.upload_message if show_message else None,
             "message_is_public": mf.message_is_public,
+            "has_gps": mf.gps_lat is not None and mf.gps_lon is not None,
         })
 
     return templates.TemplateResponse(request, "gallery/gallery.html", await build_ctx(

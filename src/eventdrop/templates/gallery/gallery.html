@@ -68,7 +68,7 @@
                     <option value="" {% if not uploader_filter %}selected{% endif %}>{{ t("gallery.filter_all_uploaders") }}</option>
                     {% for contrib in contributors %}
                     <option value="{{ contrib.email }}" {% if uploader_filter == contrib.email %}selected{% endif %}>
-                        {{ contrib.email }} ({{ contrib.count }})
+                        {% if is_owner %}{{ contrib.email }}{% else %}{{ contrib.email | anonymize_email }}{% endif %} ({{ contrib.count }})
                     </option>
                     {% endfor %}
                 </select>
@@ -104,7 +104,7 @@
             <span>{{ t("gallery.filtered_by").replace("{n}", media_with_urls|length|string) }}</span>
             {% if uploader_filter %}
             <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-full">
-                👤 {{ uploader_filter }}
+                👤 {% if is_owner %}{{ uploader_filter }}{% else %}{{ uploader_filter | anonymize_email }}{% endif %}
             </span>
             {% endif %}
             {% if source_filter %}
@@ -136,11 +136,11 @@
             <a href="?uploader={{ contrib.email }}"
                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-colors
                       {% if uploader_filter == contrib.email %}bg-indigo-600 text-white border-indigo-600{% else %}bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500{% endif %}"
-               title="{{ contrib.email }}">
+               title="{% if is_owner %}{{ contrib.email }}{% else %}{{ contrib.email | anonymize_email }}{% endif %}">
                 <span class="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-300 text-xs font-bold flex-shrink-0">
                     {{ contrib.email[0]|upper }}
                 </span>
-                <span class="truncate max-w-[160px]" title="{{ contrib.email }}">{{ contrib.email }}</span>
+                <span class="truncate max-w-[160px]" title="{% if is_owner %}{{ contrib.email }}{% else %}{{ contrib.email | anonymize_email }}{% endif %}">{% if is_owner %}{{ contrib.email }}{% else %}{{ contrib.email | anonymize_email }}{% endif %}</span>
                 <span class="text-xs {% if uploader_filter == contrib.email %}text-indigo-200{% else %}text-gray-400 dark:text-gray-500{% endif %} ml-0.5">{{ contrib.count }}</span>
             </a>
             {% endfor %}
@@ -260,11 +260,14 @@
                 </div>
                 <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
                     {% if size_str %}<span class="flex-shrink-0">{{ size_str }}</span>{% endif %}
+                    {% if item.has_gps %}<span class="flex-shrink-0" title="GPS location available">🗺️</span>{% endif %}
                     {% if display_date %}
                     <span class="flex-shrink-0">{{ display_date.strftime('%b %-d, %Y') if display_date.strftime is defined else display_date }}</span>
                     {% endif %}
                     {% if item.uploader_email %}
-                    <span class="truncate" title="{{ item.uploader_email }}">{{ item.uploader_email.split('@')[0] }}</span>
+                    <span class="truncate" title="{% if is_owner %}{{ item.uploader_email }}{% else %}{{ item.uploader_email | anonymize_email }}{% endif %}">
+                        {% if is_owner %}{{ item.uploader_email.split('@')[0] }}{% else %}{{ item.uploader_email | anonymize_email }}{% endif %}
+                    </span>
                     {% endif %}
                 </div>
                 {# Upload message if visible #}
