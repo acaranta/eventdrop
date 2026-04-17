@@ -18,10 +18,13 @@ async def get_current_user_optional(request: Request, db: AsyncSession = Depends
 
 
 async def get_current_user(request: Request, db: AsyncSession = Depends(get_db)) -> User:
-    """Returns current user, raises 302 redirect to login if not logged in."""
+    """Returns current user, raises 302 redirect to login if not logged in.
+    Redirects to the forced password-change page when required."""
     user = await get_current_user_optional(request, db)
     if user is None:
         raise HTTPException(status_code=302, headers={"Location": "/auth/login"})
+    if user.password_change_required and request.url.path != "/auth/change-password":
+        raise HTTPException(status_code=302, headers={"Location": "/auth/change-password"})
     return user
 
 

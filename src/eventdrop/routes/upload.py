@@ -79,7 +79,7 @@ async def set_uploader_email(
     await db.commit()
 
     response = RedirectResponse(url=f"/e/{event_id}/", status_code=303)
-    response.set_cookie(COOKIE_NAME, session.token, httponly=True, samesite="lax", max_age=365 * 24 * 3600)
+    response.set_cookie(COOKIE_NAME, session.token, httponly=True, samesite="lax", max_age=90 * 24 * 3600)
     return response
 
 

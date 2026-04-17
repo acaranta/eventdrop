@@ -2,9 +2,6 @@ import logging
 import uuid
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Optional
-
-
 from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
@@ -71,6 +68,8 @@ async def login_post(
         )
 
     request.session["user_id"] = str(user.id)
+    if user.password_change_required:
+        return RedirectResponse(url="/auth/change-password", status_code=302)
     return RedirectResponse(url="/events/", status_code=302)
 
 
@@ -167,10 +166,15 @@ async def forgot_password_post(
     email: str = Form(...),
     db: AsyncSession = Depends(get_db),
 ):
+    import asyncio
+    import random as _random
     from eventdrop.database.models import PasswordResetToken
     from eventdrop.services.email_service import send_password_reset_email
 
-    # Always show success to prevent email enumeration
+    # Constant-time response: always wait a short random delay to prevent
+    # timing-based email enumeration regardless of whether the account exists.
+    await asyncio.sleep(_random.uniform(0.1, 0.3))
+
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
 
@@ -253,6 +257,57 @@ async def reset_password_post(
 
     request.session["flash"] = {"type": "success", "key": "flash.reset_success"}
     return RedirectResponse(url="/auth/login", status_code=302)
+
+
+@router.get("/change-password", response_class=HTMLResponse)
+async def change_password_get(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Display the forced password-change page."""
+    user = await get_current_user_optional(request, db)
+    if user is None:
+        return RedirectResponse(url="/auth/login", status_code=302)
+    return templates.TemplateResponse(
+        request,
+        "auth/change_password.html",
+        await build_ctx(request, user=user),
+    )
+
+
+@router.post("/change-password")
+async def change_password_post(
+    request: Request,
+    password: str = Form(...),
+    confirm_password: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """Process the forced password-change form."""
+    user = await get_current_user_optional(request, db)
+    if user is None:
+        return RedirectResponse(url="/auth/login", status_code=302)
+
+    if len(password) < 8:
+        return templates.TemplateResponse(
+            request,
+            "auth/change_password.html",
+            await build_ctx(request, user=user, error_key="flash.password_error_short"),
+            status_code=400,
+        )
+    if password != confirm_password:
+        return templates.TemplateResponse(
+            request,
+            "auth/change_password.html",
+            await build_ctx(request, user=user, error_key="flash.password_error_match"),
+            status_code=400,
+        )
+
+    user.password_hash = hash_password(password)
+    user.password_change_required = False
+    await db.commit()
+
+    request.session["flash"] = {"type": "success", "key": "flash.password_changed"}
+    return RedirectResponse(url="/events/", status_code=302)
 
 
 # ---- OIDC routes (only registered if OIDC is configured) ----

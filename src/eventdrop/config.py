@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     admin_username: str = "admin"
     admin_password: str = "changeme"
     secret_key: str = "dev-secret-key-change-in-production"
+    # Separate key for encrypting stored email credentials.
+    # Must be set in production; defaults to a deterministic fallback only for development.
+    encryption_key: str = ""
 
     # Database
     db_type: str = "sqlite"  # "sqlite" or "mysql"
@@ -69,6 +72,18 @@ class Settings(BaseSettings):
             and bool(self.oidc_client_id)
             and bool(self.oidc_client_secret)
         )
+
+    def get_fernet_key(self) -> bytes:
+        """Return a 32-byte URL-safe base64-encoded key suitable for Fernet.
+
+        Uses EVENTDROP_ENCRYPTION_KEY when set; falls back to deriving from
+        secret_key so that existing deployments that never set the variable keep
+        working without re-encrypting stored passwords.
+        """
+        import base64
+        import hashlib
+        source = self.encryption_key if self.encryption_key else self.secret_key
+        return base64.urlsafe_b64encode(hashlib.sha256(source.encode()).digest())
 
     def is_smtp_configured(self) -> bool:
         return bool(self.smtp_host and self.smtp_from)

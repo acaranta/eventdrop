@@ -99,6 +99,16 @@
       "confirm_placeholder": "Passwort wiederholen",
       "reset_btn": "Passwort zurücksetzen",
       "back_to_login": "Zurück zur Anmeldung"
+    },
+    "change_password": {
+      "title": "Passwort ändern — EventDrop",
+      "heading": "Passwort ändern",
+      "subtitle": "Sie müssen ein neues Passwort festlegen, bevor Sie fortfahren.",
+      "new_password": "Neues Passwort",
+      "new_password_placeholder": "Mindestens 8 Zeichen",
+      "confirm_password": "Neues Passwort bestätigen",
+      "confirm_placeholder": "Passwort wiederholen",
+      "change_btn": "Passwort ändern"
     }
   },
   "events": {

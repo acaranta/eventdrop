@@ -5,8 +5,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from eventdrop.config import settings
@@ -32,14 +34,22 @@ async def create_admin_user():
         )
         admin = result.scalar_one_or_none()
         if admin is None:
+            using_default_password = settings.admin_password == "changeme"
             admin = User(
                 username=settings.admin_username,
                 password_hash=hash_password(settings.admin_password),
                 is_admin=True,
+                password_change_required=using_default_password,
             )
             session.add(admin)
             await session.commit()
-            logger.info(f"Admin user '{settings.admin_username}' created.")
+            if using_default_password:
+                logger.warning(
+                    f"Admin user '{settings.admin_username}' created with default password. "
+                    "A password change will be required on first login."
+                )
+            else:
+                logger.info(f"Admin user '{settings.admin_username}' created.")
         else:
             logger.info(f"Admin user '{settings.admin_username}' already exists, skipping credential update.")
 
@@ -76,7 +86,25 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+
 app = FastAPI(title="EventDrop", lifespan=lifespan)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.base_url.rstrip("/")],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type"],
+)
 app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 
 # Mount static files
@@ -88,10 +116,14 @@ app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 # Serve local media files
 @app.get("/media/{path:path}")
 async def serve_media(path: str):
-    file_path = os.path.join(settings.storage_local_path, path)
-    if not os.path.exists(file_path):
+    storage_root = os.path.normpath(settings.storage_local_path)
+    full_path = os.path.normpath(os.path.join(storage_root, path))
+    # Reject any path that escapes the storage root directory
+    if not full_path.startswith(storage_root + os.sep) and full_path != storage_root:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if not os.path.exists(full_path):
         raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path)
+    return FileResponse(full_path)
 
 
 # Register routers

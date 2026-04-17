@@ -99,6 +99,16 @@
       "confirm_placeholder": "Répétez votre mot de passe",
       "reset_btn": "Réinitialiser le mot de passe",
       "back_to_login": "Retour à la connexion"
+    },
+    "change_password": {
+      "title": "Changer le mot de passe — EventDrop",
+      "heading": "Changer votre mot de passe",
+      "subtitle": "Vous devez définir un nouveau mot de passe avant de continuer.",
+      "new_password": "Nouveau mot de passe",
+      "new_password_placeholder": "Au moins 8 caractères",
+      "confirm_password": "Confirmer le nouveau mot de passe",
+      "confirm_placeholder": "Répéter votre mot de passe",
+      "change_btn": "Changer le mot de passe"
     }
   },
   "events": {

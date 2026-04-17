@@ -43,7 +43,9 @@ async def send_email(to: str, subject: str, body_html: str, body_text: Optional[
                     server.sendmail(settings.smtp_from, [to], msg.as_string())
             return True
         except Exception as e:
-            logger.error(f"Failed to send email to {to}: {e}")
+            # Redact the recipient address to avoid logging PII
+            domain = to.split("@")[-1] if "@" in to else "unknown"
+            logger.error(f"Failed to send email to *@{domain}: {e}")
             return False
 
     return await asyncio.to_thread(_send)

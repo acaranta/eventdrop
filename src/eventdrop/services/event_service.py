@@ -1,4 +1,4 @@
-import random
+import secrets
 import string
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,9 +9,9 @@ import uuid
 
 
 def generate_event_id(length: int = 8) -> str:
-    """Generate a URL-friendly alphanumeric event ID."""
+    """Generate a URL-friendly alphanumeric event ID using a CSPRNG."""
     chars = string.ascii_lowercase + string.digits
-    return ''.join(random.choices(chars, k=length))
+    return ''.join(secrets.choice(chars) for _ in range(length))
 
 
 async def create_event(db: AsyncSession, owner_id: str, name: str,
@@ -151,8 +151,6 @@ async def upsert_email_config(db: AsyncSession, event_id: str, config_data: dict
     """Create or update email config for an event."""
     from eventdrop.config import settings as app_settings
     from cryptography.fernet import Fernet
-    import base64
-    import hashlib
 
     result = await db.execute(
         select(EventEmailConfig).where(EventEmailConfig.event_id == event_id)
@@ -162,7 +160,7 @@ async def upsert_email_config(db: AsyncSession, event_id: str, config_data: dict
     # Encrypt password if provided
     password = config_data.pop("password", None)
     if password:
-        key = base64.urlsafe_b64encode(hashlib.sha256(app_settings.secret_key.encode()).digest())
+        key = app_settings.get_fernet_key()
         f = Fernet(key)
         config_data["password"] = f.encrypt(password.encode()).decode()
     elif config and not password:

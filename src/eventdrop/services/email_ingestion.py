@@ -1,8 +1,6 @@
 import asyncio
-import base64
 import email
 import email.policy
-import hashlib
 import imaplib
 import io
 import logging
@@ -26,7 +24,7 @@ ALLOWED_IMAGE_VIDEO_MIMES = ALLOWED_MIME_TYPES
 
 def decrypt_password(encrypted_password: str) -> str:
     from cryptography.fernet import Fernet
-    key = base64.urlsafe_b64encode(hashlib.sha256(settings.secret_key.encode()).digest())
+    key = settings.get_fernet_key()
     f = Fernet(key)
     return f.decrypt(encrypted_password.encode()).decode()
 

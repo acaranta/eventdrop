@@ -116,6 +116,9 @@ async def download_archive(token: str, db: AsyncSession = Depends(get_db)):
     if archive.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
         raise HTTPException(status_code=410, detail="Download link has expired")
 
+    if archive.downloaded:
+        raise HTTPException(status_code=410, detail="Download link has already been used")
+
     if not os.path.exists(archive.file_path):
         raise HTTPException(status_code=404, detail="Archive file not found")
 
@@ -256,6 +259,24 @@ async def test_email_connection(
     use_ssl = body.get("use_ssl", True)
     username = body.get("username", "")
     password = body.get("password", "")
+
+    # Reject connections to private/loopback addresses to prevent SSRF
+    import ipaddress
+    import socket
+    try:
+        resolved = socket.getaddrinfo(server_host, None)
+        for _, _, _, _, sockaddr in resolved:
+            ip = ipaddress.ip_address(sockaddr[0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                raise HTTPException(status_code=400, detail="Connections to private or reserved addresses are not allowed")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=400, detail="Unable to resolve host")
+
+    # Validate port range
+    if not (1 <= server_port <= 65535):
+        raise HTTPException(status_code=400, detail="Invalid port number")
 
     def test_connection():
         try:

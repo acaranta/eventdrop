@@ -99,6 +99,16 @@
       "confirm_placeholder": "Ripeti la password",
       "reset_btn": "Ripristina password",
       "back_to_login": "Torna al login"
+    },
+    "change_password": {
+      "title": "Cambia password — EventDrop",
+      "heading": "Cambia la tua password",
+      "subtitle": "Devi impostare una nuova password prima di continuare.",
+      "new_password": "Nuova password",
+      "new_password_placeholder": "Almeno 8 caratteri",
+      "confirm_password": "Conferma nuova password",
+      "confirm_placeholder": "Ripeti la password",
+      "change_btn": "Cambia password"
     }
   },
   "events": {
