@@ -21,6 +21,8 @@ services:
       EVENTDROP_EMAIL_POLL_INTERVAL_SECONDS: "120"
       EVENTDROP_ARCHIVE_TEMP_PATH: "/data/tmp"
       EVENTDROP_ARCHIVE_EXPIRY_MINUTES: "15"
+      # Trust forwarded IP headers from the reverse proxy
+      UVICORN_FORWARDED_ALLOW_IPS: "*"
       # SMTP (required for password reset emails)
       # EVENTDROP_SMTP_HOST: "smtp.example.com"
       # EVENTDROP_SMTP_PORT: "587"

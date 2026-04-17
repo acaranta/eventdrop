@@ -47,6 +47,8 @@ services:
       EVENTDROP_MAX_UPLOAD_SIZE_MB: "500"
       EVENTDROP_ARCHIVE_TEMP_PATH: "/data/tmp"
       EVENTDROP_ARCHIVE_EXPIRY_MINUTES: "15"
+      # Trust forwarded IP headers from the reverse proxy
+      UVICORN_FORWARDED_ALLOW_IPS: "*"
       # Email ingestion
       EVENTDROP_EMAIL_INGESTION_ENABLED: "true"
       EVENTDROP_EMAIL_POLL_INTERVAL_SECONDS: "120"
