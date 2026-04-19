@@ -2,6 +2,8 @@ import hashlib
 import io
 import os
 import re
+import subprocess
+import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -115,16 +117,20 @@ def extract_gps_coordinates(data: bytes, mime_type: str) -> tuple[Optional[float
 
 
 def generate_thumbnail(data: bytes, mime_type: str) -> Optional[bytes]:
-    """Generate a thumbnail for an image. Returns None for videos."""
-    if not mime_type.startswith("image/"):
-        return None
+    """Generate a thumbnail for an image or video."""
+    if mime_type.startswith("image/"):
+        return _thumbnail_from_image(data)
+    if mime_type.startswith("video/"):
+        return _thumbnail_from_video(data)
+    return None
+
+
+def _thumbnail_from_image(data: bytes) -> Optional[bytes]:
     try:
         from PIL import Image, ImageOps
         img = Image.open(io.BytesIO(data))
-        # Apply EXIF orientation so thumbnails match the correct display orientation
         img = ImageOps.exif_transpose(img)
         img.thumbnail((400, 400))
-        # Convert RGBA/P to RGB for JPEG output
         if img.mode in ("RGBA", "P"):
             img = img.convert("RGB")
         buf = io.BytesIO()
@@ -132,6 +138,37 @@ def generate_thumbnail(data: bytes, mime_type: str) -> Optional[bytes]:
         return buf.getvalue()
     except Exception:
         return None
+
+
+def _thumbnail_from_video(data: bytes) -> Optional[bytes]:
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp_in:
+            tmp_in.write(data)
+            tmp_in_path = tmp_in.name
+        tmp_out_path = tmp_in_path + "_thumb.jpg"
+        try:
+            result = subprocess.run(
+                [
+                    "ffmpeg", "-y",
+                    "-i", tmp_in_path,
+                    "-ss", "00:00:01",
+                    "-vframes", "1",
+                    "-vf", "scale=400:-1",
+                    tmp_out_path,
+                ],
+                capture_output=True,
+                timeout=30,
+            )
+            if result.returncode == 0 and os.path.exists(tmp_out_path):
+                with open(tmp_out_path, "rb") as f:
+                    return f.read()
+        finally:
+            os.unlink(tmp_in_path)
+            if os.path.exists(tmp_out_path):
+                os.unlink(tmp_out_path)
+    except Exception:
+        return None
+    return None
 
 
 async def store_media_file(

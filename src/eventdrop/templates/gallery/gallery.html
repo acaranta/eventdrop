@@ -232,11 +232,21 @@
                      loading="lazy"
                      draggable="false">
                 {% elif item.mime_type and item.mime_type.startswith('video/') %}
-                <div class="w-full h-full flex flex-col items-center justify-center bg-gray-900 dark:bg-gray-900">
-                    <svg class="w-10 h-10 text-white/70 mb-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
-                    </svg>
-                    <p class="text-xs text-white/50 truncate px-2 max-w-full">{{ item.filename }}</p>
+                <div class="relative w-full h-full bg-gray-900 dark:bg-gray-900">
+                    {% if item.thumb_url %}
+                    <img src="{{ item.thumb_url }}" alt="{{ item.filename }}"
+                         class="w-full h-full object-cover transition-opacity hover:opacity-90 select-none"
+                         loading="lazy"
+                         draggable="false">
+                    {% endif %}
+                    <div class="absolute inset-0 flex flex-col items-center justify-center {% if item.thumb_url %}bg-black/30{% endif %}">
+                        <svg class="w-10 h-10 text-white/80 drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+                        </svg>
+                        {% if not item.thumb_url %}
+                        <p class="text-xs text-white/50 truncate px-2 max-w-full mt-1">{{ item.filename }}</p>
+                        {% endif %}
+                    </div>
                 </div>
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs text-center px-2">

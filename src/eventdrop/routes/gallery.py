@@ -93,7 +93,12 @@ async def gallery_page(
     media_with_urls = []
     for mf in media_files:
         url = await storage.get_url(mf.stored_path)
-        thumb_url = await storage.get_url(mf.thumb_path) if mf.thumb_path else url
+        if mf.thumb_path:
+            thumb_url = await storage.get_url(mf.thumb_path)
+        elif mf.mime_type and mf.mime_type.startswith("video/"):
+            thumb_url = None
+        else:
+            thumb_url = url
         show_message = (
             mf.upload_message and
             (mf.message_is_public or bool(is_owner))

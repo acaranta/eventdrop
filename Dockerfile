@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libpng-dev \
     libwebp-dev \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
