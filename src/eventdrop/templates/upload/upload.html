@@ -409,7 +409,10 @@ function uploadFile(file, id) {
             if (status) {
                 status.innerHTML = `<span class="text-green-600 dark:text-green-400 font-medium">✅ ${i18n.done}</span>`;
             }
-            if (item && queue) queue.appendChild(item);
+            if (item && queue) {
+                item.dataset.uploadStatus = 'done';
+                queue.appendChild(item);
+            }
         } else {
             errorCount++;
             let msg = 'Error';
@@ -422,6 +425,7 @@ function uploadFile(file, id) {
                 status.innerHTML = `<span class="text-red-600 dark:text-red-400">❌ ${msg}</span>`;
             }
             if (item) {
+                item.dataset.uploadStatus = 'error';
                 const retryBtn = document.createElement('button');
                 retryBtn.type = 'button';
                 retryBtn.textContent = i18n.retry;
@@ -430,6 +434,7 @@ function uploadFile(file, id) {
                     if (bar) { bar.style.width = '0%'; bar.className = 'bg-indigo-500 h-1.5 rounded-full transition-all duration-200'; }
                     if (status) status.textContent = i18n.queued;
                     retryBtn.remove();
+                    delete item.dataset.uploadStatus;
                     pendingCount++;
                     errorCount--;
                     uploadPending.push({ file, id });
@@ -437,7 +442,10 @@ function uploadFile(file, id) {
                     processUploadQueue();
                 };
                 if (status) status.after(retryBtn);
-                if (queue) queue.appendChild(item);
+                if (queue) {
+                    const firstDone = queue.querySelector('[data-upload-status="done"]');
+                    firstDone ? queue.insertBefore(item, firstDone) : queue.appendChild(item);
+                }
             }
         }
 
@@ -453,7 +461,11 @@ function uploadFile(file, id) {
         const status = document.getElementById(`${id}-status`);
         const item = document.getElementById(id);
         if (status) status.innerHTML = `<span class="text-red-600 dark:text-red-400">❌ ${i18n.errorNetwork}</span>`;
-        if (item && queue) queue.appendChild(item);
+        if (item && queue) {
+            item.dataset.uploadStatus = 'error';
+            const firstDone = queue.querySelector('[data-upload-status="done"]');
+            firstDone ? queue.insertBefore(item, firstDone) : queue.appendChild(item);
+        }
         updateSummary();
         updateGlobalProgress();
         processUploadQueue();
