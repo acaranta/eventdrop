@@ -202,6 +202,12 @@ const eventId = "{{ event.id }}";
 const CONCURRENT_UPLOADS = 5;
 let activeUploads = 0;
 let uploadPending = [];
+const i18n = {
+    queued: "{{ t('upload.status_queued') }}",
+    done: "{{ t('upload.status_done') }}",
+    errorNetwork: "{{ t('upload.status_error_network') }}",
+    retry: "{{ t('upload.retry') }}"
+};
 let pendingCount = 0;
 let doneCount = 0;
 let errorCount = 0;
@@ -297,7 +303,7 @@ function addFileToQueue(file) {
     info.innerHTML = `
         <div class="flex items-center justify-between gap-2 mb-1">
             <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">${file.name} <span class="text-xs font-normal text-gray-400">${formatFileSize(file.size)}</span></p>
-            <span id="${id}-status" class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">Queued</span>
+            <span id="${id}-status" class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">${i18n.queued}</span>
         </div>
         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
             <div id="${id}-bar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-200" style="width: 0%"></div>
@@ -325,6 +331,7 @@ function uploadFile(file, id) {
     formData.append('upload_message', batchMessage || '');
     formData.append('message_is_public', batchMessagePublic ? 'true' : 'false');
 
+    const queue = document.getElementById('upload-queue');
     const status0 = document.getElementById(`${id}-status`);
     if (status0) status0.textContent = '0%';
 
@@ -355,8 +362,9 @@ function uploadFile(file, id) {
                 bar.className = 'bg-green-500 h-1.5 rounded-full transition-all';
             }
             if (status) {
-                status.innerHTML = '<span class="text-green-600 dark:text-green-400 font-medium">✅ Done</span>';
+                status.innerHTML = `<span class="text-green-600 dark:text-green-400 font-medium">✅ ${i18n.done}</span>`;
             }
+            if (item && queue) queue.appendChild(item);
         } else {
             errorCount++;
             let msg = 'Error';
@@ -368,15 +376,14 @@ function uploadFile(file, id) {
             if (status) {
                 status.innerHTML = `<span class="text-red-600 dark:text-red-400">❌ ${msg}</span>`;
             }
-            // Add retry button
             if (item) {
                 const retryBtn = document.createElement('button');
                 retryBtn.type = 'button';
-                retryBtn.textContent = 'Retry';
+                retryBtn.textContent = i18n.retry;
                 retryBtn.className = 'ml-2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline';
                 retryBtn.onclick = function() {
                     if (bar) { bar.style.width = '0%'; bar.className = 'bg-indigo-500 h-1.5 rounded-full transition-all duration-200'; }
-                    if (status) status.textContent = 'Queued';
+                    if (status) status.textContent = i18n.queued;
                     retryBtn.remove();
                     pendingCount++;
                     errorCount--;
@@ -384,6 +391,7 @@ function uploadFile(file, id) {
                     processUploadQueue();
                 };
                 if (status) status.after(retryBtn);
+                if (queue) queue.appendChild(item);
             }
         }
 
@@ -396,7 +404,9 @@ function uploadFile(file, id) {
         activeUploads--;
         errorCount++;
         const status = document.getElementById(`${id}-status`);
-        if (status) status.innerHTML = '<span class="text-red-600 dark:text-red-400">❌ Network error</span>';
+        const item = document.getElementById(id);
+        if (status) status.innerHTML = `<span class="text-red-600 dark:text-red-400">❌ ${i18n.errorNetwork}</span>`;
+        if (item && queue) queue.appendChild(item);
         updateSummary();
         processUploadQueue();
     };

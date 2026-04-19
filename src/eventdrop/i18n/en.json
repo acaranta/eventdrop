@@ -222,7 +222,11 @@
     "drop_formats": "JPEG, PNG, GIF, WebP, HEIC, MP4, MOV, AVI and more",
     "select_btn": "Select Files to Upload",
     "done_message": "{n} file(s) uploaded!",
-    "view_gallery": "View gallery →"
+    "view_gallery": "View gallery →",
+    "status_queued": "Queued",
+    "status_done": "Done",
+    "status_error_network": "Network error",
+    "retry": "Retry"
   },
   "gallery": {
     "title": "Gallery — {name} — EventDrop",
