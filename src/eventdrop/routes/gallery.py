@@ -86,6 +86,8 @@ async def gallery_page(
     result = await db.execute(query)
     media_files = list(result.scalars().all())
 
+    total_media_size = sum(mf.file_size or 0 for mf in media_files)
+
     storage = get_storage()
 
     media_with_urls = []
@@ -126,4 +128,6 @@ async def gallery_page(
         gps_filter=bool(gps_only),
         sort_by=sort_by if sort_by in ("exif", "upload") else "exif",
         sort_order=sort_order if sort_order in ("asc", "desc") else "asc",
+        total_media_size=total_media_size,
+        settings=settings,
     ))

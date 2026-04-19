@@ -264,7 +264,20 @@
     "download_failed": "Error de descarga: ",
     "delete_failed": "Error al eliminar: ",
     "files_not_deleted": "{n} archivo(s) no pudieron ser eliminados.",
-    "deleting": "Eliminando…"
+    "deleting": "Eliminando…",
+    "large_gallery_warning": "Galería grande ({files} archivos, {size}) — la creación puede tardar varios minutos. Recibirás un enlace dedicado para marcar."
+  },
+  "downloads": {
+    "page_title": "Descargar archivo",
+    "status_pending": "En cola — esperando inicio…",
+    "status_processing": "Creando tu archivo…",
+    "status_ready": "¡Archivo listo!",
+    "status_failed": "Error al crear el archivo.",
+    "status_expired": "Este enlace ha caducado.",
+    "download_now": "Descargar ahora",
+    "files_count": "{n} archivos — {size}",
+    "expires_at": "Enlace válido hasta {date}",
+    "bookmark_hint": "Puedes marcar esta página y volver más tarde."
   },
   "account": {
     "title": "Mi cuenta — EventDrop",

@@ -264,7 +264,20 @@
     "download_failed": "Échec du téléchargement : ",
     "delete_failed": "Échec de la suppression : ",
     "files_not_deleted": "{n} fichier(s) n'ont pas pu être supprimés.",
-    "deleting": "Suppression…"
+    "deleting": "Suppression…",
+    "large_gallery_warning": "Grande galerie ({files} fichiers, {size}) — la création peut prendre plusieurs minutes. Vous recevrez un lien dédié à mettre en favori."
+  },
+  "downloads": {
+    "page_title": "Téléchargement de l'archive",
+    "status_pending": "En attente de démarrage…",
+    "status_processing": "Création de l'archive en cours…",
+    "status_ready": "Archive prête !",
+    "status_failed": "Échec de la création de l'archive.",
+    "status_expired": "Ce lien a expiré.",
+    "download_now": "Télécharger maintenant",
+    "files_count": "{n} fichiers — {size}",
+    "expires_at": "Lien valide jusqu'au {date}",
+    "bookmark_hint": "Vous pouvez mettre cette page en favori et revenir plus tard."
   },
   "account": {
     "title": "Mon compte — EventDrop",

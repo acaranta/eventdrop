@@ -162,6 +162,15 @@
 
     {% endif %}{# /if contributors — filter bar always shown when gallery has content #}
 
+    {% if can_download and (media_with_urls|length > settings.download_warn_max_files or total_media_size > settings.download_warn_max_size_mb * 1048576) %}
+    <div class="mb-4 flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+        </svg>
+        <span>{{ t("gallery.large_gallery_warning").replace("{files}", media_with_urls|length|string).replace("{size}", ((total_media_size / 1073741824)|round(1)|string) + " GB") }}</span>
+    </div>
+    {% endif %}
+
     <!-- Selection controls (when can_delete or can_download) -->
     {% if media_with_urls %}
     {% if can_delete or can_download %}
@@ -430,23 +439,15 @@
     </div>
 </div>
 
-<!-- Download spinner overlay -->
+<!-- Download overlay (brief flash before redirect) -->
 <div id="download-overlay" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
     <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-200 dark:border-gray-700 max-w-sm w-full mx-4 text-center">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 mb-4">
-            <svg class="w-6 h-6 text-green-600 dark:text-green-400 animate-bounce" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+            <svg class="w-6 h-6 text-green-600 dark:text-green-400 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
         </div>
-        <p class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1" id="download-status">{{ t("gallery.preparing_download") }}</p>
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("gallery.download_wait") }}</p>
-        <div class="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div id="download-bar" class="bg-green-500 h-2 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
-        </div>
-        <button type="button" id="download-cancel-btn" onclick="cancelDownload()"
-                class="mt-5 px-4 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
-            {{ t("cancel") }}
-        </button>
+        <p class="text-base font-semibold text-gray-900 dark:text-gray-100" id="download-status">{{ t("gallery.preparing_archive") }}</p>
     </div>
 </div>
 {% endblock %}
@@ -465,7 +466,6 @@ window.SOURCE_FILTER = {{ ('"' ~ source_filter ~ '"') if source_filter else 'nul
 const _t = {
     selected: {{ t("gallery.selected") | tojson }},
     preparingArchive: {{ t("gallery.preparing_archive") | tojson }},
-    downloading: {{ t("gallery.downloading") | tojson }},
     selectFilesAlert: {{ t("gallery.select_files_alert") | tojson }},
     downloadFailed: {{ t("gallery.download_failed") | tojson }},
     deleteFailed: {{ t("gallery.delete_failed") | tojson }},
@@ -473,7 +473,6 @@ const _t = {
     deleteConfirmMsg: {{ t("gallery.delete_confirm_msg") | tojson }},
     deleting: {{ t("gallery.deleting") | tojson }},
     deleteBtn: {{ t("gallery.delete_btn") | tojson }},
-    cancel: {{ t("cancel") | tojson }},
 };
 
 // Gather all media items
@@ -616,43 +615,6 @@ document.addEventListener('keydown', e => {
 });
 
 // ---- Download ----
-let _downloadAbortController = null;
-let _downloadProgressTimer = null;
-
-function cancelDownload() {
-    if (_downloadAbortController) _downloadAbortController.abort();
-    _stopProgressAnimation();
-    document.getElementById('download-overlay').classList.add('hidden');
-}
-
-function _stopProgressAnimation() {
-    if (_downloadProgressTimer) {
-        clearInterval(_downloadProgressTimer);
-        _downloadProgressTimer = null;
-    }
-}
-
-function _startProgressAnimation() {
-    const bar = document.getElementById('download-bar');
-    let pct = 0;
-    bar.style.width = '0%';
-    _downloadProgressTimer = setInterval(() => {
-        // Ease toward 90%: each tick closes 4% of the remaining gap
-        pct += (90 - pct) * 0.04;
-        bar.style.width = pct.toFixed(1) + '%';
-    }, 200);
-}
-
-function _finishProgress(success) {
-    _stopProgressAnimation();
-    const bar = document.getElementById('download-bar');
-    if (success) {
-        bar.style.width = '100%';
-    } else {
-        bar.style.width = '0%';
-    }
-}
-
 async function downloadAll() {
     await startDownload(`/api/events/${eventId}/media/download-all`, {});
 }
@@ -665,33 +627,22 @@ async function downloadSelected() {
 
 async function startDownload(url, body) {
     const overlay = document.getElementById('download-overlay');
-    const status = document.getElementById('download-status');
     overlay.classList.remove('hidden');
-    status.textContent = _t.preparingArchive;
-    _startProgressAnimation();
-    _downloadAbortController = new AbortController();
     try {
         const res = await fetch(url, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(body),
-            signal: _downloadAbortController.signal,
         });
         if (!res.ok) {
             const j = await res.json().catch(() => ({}));
             throw new Error(j.detail || 'Request failed');
         }
         const data = await res.json();
-        _finishProgress(true);
-        status.textContent = _t.downloading.replace('{n}', data.file_count || '');
-        window.location.href = data.download_url;
-        setTimeout(() => overlay.classList.add('hidden'), 3000);
+        window.location.href = data.status_page;
     } catch (e) {
-        _finishProgress(false);
         overlay.classList.add('hidden');
-        if (e.name !== 'AbortError') alert(_t.downloadFailed + e.message);
-    } finally {
-        _downloadAbortController = null;
+        alert(_t.downloadFailed + e.message);
     }
 }
 

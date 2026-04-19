@@ -264,7 +264,20 @@
     "download_failed": "Download failed: ",
     "delete_failed": "Delete failed: ",
     "files_not_deleted": "{n} file(s) could not be deleted.",
-    "deleting": "Deleting…"
+    "deleting": "Deleting…",
+    "large_gallery_warning": "Large gallery ({files} files, {size}) — archive creation may take several minutes. You'll get a dedicated link you can bookmark."
+  },
+  "downloads": {
+    "page_title": "Download Archive",
+    "status_pending": "Queued — waiting to start…",
+    "status_processing": "Building your archive…",
+    "status_ready": "Archive ready!",
+    "status_failed": "Archive creation failed.",
+    "status_expired": "This link has expired.",
+    "download_now": "Download Now",
+    "files_count": "{n} files — {size}",
+    "expires_at": "Link valid until {date}",
+    "bookmark_hint": "You can bookmark this page and come back later."
   },
   "account": {
     "title": "My Account — EventDrop",

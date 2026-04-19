@@ -264,7 +264,20 @@
     "download_failed": "Download fehlgeschlagen: ",
     "delete_failed": "Löschen fehlgeschlagen: ",
     "files_not_deleted": "{n} Datei(en) konnten nicht gelöscht werden.",
-    "deleting": "Wird gelöscht…"
+    "deleting": "Wird gelöscht…",
+    "large_gallery_warning": "Große Galerie ({files} Dateien, {size}) — die Erstellung kann mehrere Minuten dauern. Sie erhalten einen dedizierten Link zum Speichern."
+  },
+  "downloads": {
+    "page_title": "Archiv herunterladen",
+    "status_pending": "In der Warteschlange…",
+    "status_processing": "Archiv wird erstellt…",
+    "status_ready": "Archiv bereit!",
+    "status_failed": "Archiv-Erstellung fehlgeschlagen.",
+    "status_expired": "Dieser Link ist abgelaufen.",
+    "download_now": "Jetzt herunterladen",
+    "files_count": "{n} Dateien — {size}",
+    "expires_at": "Link gültig bis {date}",
+    "bookmark_hint": "Sie können diese Seite als Lesezeichen speichern und später zurückkehren."
   },
   "account": {
     "title": "Mein Konto — EventDrop",
