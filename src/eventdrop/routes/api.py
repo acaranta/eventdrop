@@ -9,7 +9,7 @@ import os
 from eventdrop.database.session import get_db
 from eventdrop.database.models import Event, MediaFile
 from eventdrop.services import event_service
-from eventdrop.services.media_service import delete_media_file, list_event_media
+from eventdrop.services.media_service import delete_media_file, list_event_media, get_regen_status, regenerate_thumbnails_task
 from eventdrop.services.archive_service import enqueue_archive, get_archive_by_token
 from eventdrop.storage import get_storage
 from eventdrop.config import settings
@@ -212,6 +212,33 @@ async def delete_single_media(
     await db.commit()
 
     return JSONResponse({"deleted": success})
+
+
+@router.post("/events/{event_id}/thumbnails/regenerate")
+async def start_thumbnail_regeneration(
+    event_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    await get_event_and_check_access(event_id, request, db, require_owner=True)
+
+    status = get_regen_status(event_id)
+    if status.get("status") == "running":
+        return JSONResponse({"status": "already_running"}, status_code=409)
+
+    import asyncio
+    asyncio.create_task(regenerate_thumbnails_task(event_id))
+    return JSONResponse({"status": "started"}, status_code=202)
+
+
+@router.get("/events/{event_id}/thumbnails/status")
+async def thumbnail_regeneration_status(
+    event_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    await get_event_and_check_access(event_id, request, db, require_owner=True)
+    return JSONResponse(get_regen_status(event_id))
 
 
 @router.post("/events/{event_id}/email-config/force-poll")

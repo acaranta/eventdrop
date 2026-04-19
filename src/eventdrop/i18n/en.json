@@ -125,6 +125,10 @@
       "btn_edit": "Edit",
       "btn_upload": "Upload",
       "btn_gallery": "Gallery",
+      "btn_regen_thumbs": "Regenerate thumbnails",
+      "regen_running": "Regenerating… {done}/{total}",
+      "regen_done": "Done — {done} thumbnails",
+      "regen_failed_msg": "Regeneration failed",
       "empty_heading": "No events yet",
       "empty_desc": "Create your first event to start collecting photos and videos from your guests.",
       "empty_btn": "Create your first event"

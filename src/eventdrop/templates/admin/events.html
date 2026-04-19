@@ -88,6 +88,15 @@
                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-lg transition-colors">
                                     {{ t("admin.events.btn_view") }}
                                 </a>
+                                <button type="button"
+                                        id="regen-btn-{{ event.id }}"
+                                        onclick="startRegen('{{ event.id }}')"
+                                        title="{{ t('events.list.btn_regen_thumbs') }}"
+                                        class="inline-flex items-center p-1.5 text-xs font-medium text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/30 hover:bg-orange-100 dark:hover:bg-orange-900/50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                                    </svg>
+                                </button>
                                 <form method="post" action="/admin/events/{{ event.id }}/delete" class="inline"
                                       onsubmit="return confirm({{ t('admin.events.delete_confirm').replace('{name}', event.name) | tojson }})">
                                     <button type="submit"
@@ -95,6 +104,13 @@
                                         {{ t("admin.events.btn_delete") }}
                                     </button>
                                 </form>
+                            </div>
+                            <!-- Per-event progress bar (hidden until regeneration starts) -->
+                            <div id="regen-progress-{{ event.id }}" class="hidden mt-2 min-w-[180px]">
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                    <div id="regen-bar-{{ event.id }}" class="bg-orange-500 h-1.5 rounded-full transition-all duration-300" style="width:0%"></div>
+                                </div>
+                                <p id="regen-label-{{ event.id }}" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 text-right"></p>
                             </div>
                         </td>
                     </tr>
@@ -113,4 +129,52 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function startRegen(eventId) {
+    const btn = document.getElementById('regen-btn-' + eventId);
+    btn.disabled = true;
+    fetch('/api/events/' + eventId + '/thumbnails/regenerate', { method: 'POST' })
+        .then(r => {
+            if (r.status === 202 || r.status === 409) {
+                pollRegen(eventId);
+            } else {
+                btn.disabled = false;
+            }
+        })
+        .catch(() => { btn.disabled = false; });
+}
+
+function pollRegen(eventId) {
+    document.getElementById('regen-progress-' + eventId).classList.remove('hidden');
+    const msgRunning = {{ t("events.list.regen_running") | tojson }};
+    const msgDone = {{ t("events.list.regen_done") | tojson }};
+    const msgFailed = {{ t("events.list.regen_failed_msg") | tojson }};
+    const timer = setInterval(() => {
+        fetch('/api/events/' + eventId + '/thumbnails/status')
+            .then(r => r.json())
+            .then(d => {
+                const total = d.total || 0;
+                const done = d.done || 0;
+                const pct = total > 0 ? Math.round(done / total * 100) : 0;
+                document.getElementById('regen-bar-' + eventId).style.width = pct + '%';
+                let label;
+                if (d.status === 'done') {
+                    label = msgDone.replace('{done}', done);
+                } else if (d.status === 'failed') {
+                    label = msgFailed;
+                } else {
+                    label = msgRunning.replace('{done}', done).replace('{total}', total);
+                }
+                document.getElementById('regen-label-' + eventId).textContent = label;
+                if (d.status !== 'running') {
+                    clearInterval(timer);
+                    document.getElementById('regen-btn-' + eventId).disabled = false;
+                }
+            });
+    }, 1000);
+}
+</script>
 {% endblock %}

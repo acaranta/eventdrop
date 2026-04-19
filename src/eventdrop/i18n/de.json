@@ -125,6 +125,10 @@
       "btn_edit": "Bearbeiten",
       "btn_upload": "Hochladen",
       "btn_gallery": "Galerie",
+      "btn_regen_thumbs": "Vorschaubilder neu erstellen",
+      "regen_running": "Neu erstellen… {done}/{total}",
+      "regen_done": "Fertig — {done} Vorschaubilder",
+      "regen_failed_msg": "Fehler bei der Neuerstellung",
       "empty_heading": "Noch keine Events",
       "empty_desc": "Erstellen Sie Ihr erstes Event, um Fotos und Videos zu sammeln.",
       "empty_btn": "Erstes Event erstellen"

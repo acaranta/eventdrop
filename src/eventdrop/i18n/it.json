@@ -125,6 +125,10 @@
       "btn_edit": "Modifica",
       "btn_upload": "Carica",
       "btn_gallery": "Galleria",
+      "btn_regen_thumbs": "Rigenera miniature",
+      "regen_running": "Rigenerazione… {done}/{total}",
+      "regen_done": "Fatto — {done} miniature",
+      "regen_failed_msg": "Rigenerazione fallita",
       "empty_heading": "Nessun evento",
       "empty_desc": "Crea il tuo primo evento per iniziare a raccogliere foto e video.",
       "empty_btn": "Crea il primo evento"

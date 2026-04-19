@@ -1,5 +1,7 @@
+import asyncio
 import hashlib
 import io
+import logging
 import os
 import re
 import subprocess
@@ -8,6 +10,12 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, BinaryIO
+
+logger = logging.getLogger(__name__)
+
+# In-memory progress tracker for thumbnail regeneration tasks.
+# key: event_id → {"status": "running"|"done"|"failed", "total": int, "done": int, "failed": int}
+_regen_tasks: dict[str, dict] = {}
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
@@ -288,6 +296,67 @@ async def list_event_media(db: AsyncSession, event_id: str) -> list[MediaFile]:
         .order_by(MediaFile.uploaded_at.desc())
     )
     return list(result.scalars().all())
+
+
+def get_regen_status(event_id: str) -> dict:
+    return _regen_tasks.get(event_id, {"status": "idle"})
+
+
+async def regenerate_thumbnails_task(event_id: str) -> None:
+    from eventdrop.database.engine import AsyncSessionLocal
+    from eventdrop.storage import get_storage
+
+    _regen_tasks[event_id] = {"status": "running", "total": 0, "done": 0, "failed": 0}
+
+    async with AsyncSessionLocal() as db:
+        try:
+            result = await db.execute(
+                select(MediaFile).where(MediaFile.event_id == event_id)
+            )
+            media_files = list(result.scalars().all())
+            _regen_tasks[event_id]["total"] = len(media_files)
+
+            storage = get_storage()
+
+            for mf in media_files:
+                try:
+                    file_obj = await storage.retrieve(mf.stored_path)
+                    file_data = file_obj.read()
+
+                    # Delete existing thumbnail if present
+                    if mf.thumb_path:
+                        try:
+                            await storage.delete(mf.thumb_path)
+                        except Exception:
+                            pass
+
+                    thumb_data = generate_thumbnail(file_data, mf.mime_type)
+                    new_thumb_path = None
+
+                    if thumb_data:
+                        file_datetime = extract_exif_datetime(file_data, mf.mime_type)
+                        new_thumb_path = build_storage_path(
+                            event_id,
+                            mf.uploader_email,
+                            mf.original_filename,
+                            file_datetime,
+                            prefix="thumb_",
+                        )
+                        await storage.store(
+                            new_thumb_path, io.BytesIO(thumb_data), "image/jpeg"
+                        )
+
+                    mf.thumb_path = new_thumb_path
+                    await db.commit()
+                    _regen_tasks[event_id]["done"] += 1
+                except Exception as e:
+                    logger.warning(f"Thumbnail regen failed for {mf.id}: {e}")
+                    _regen_tasks[event_id]["failed"] += 1
+
+            _regen_tasks[event_id]["status"] = "done"
+        except Exception as e:
+            logger.error(f"Thumbnail regeneration task failed for event {event_id}: {e}")
+            _regen_tasks[event_id]["status"] = "failed"
 
 
 async def get_or_create_uploader_session(db: AsyncSession, email: str) -> UploaderSession:
