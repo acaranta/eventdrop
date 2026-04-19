@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional, BinaryIO
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, update
 
 from eventdrop.database.models import MediaFile, UploaderSession
 from eventdrop.storage.base import StorageBackend
@@ -273,8 +273,11 @@ async def get_uploader_by_token(db: AsyncSession, token: str) -> Optional[Upload
     )
     session = result.scalar_one_or_none()
     if session:
-        session.last_used_at = datetime.now(timezone.utc)
-        await db.flush()
+        await db.execute(
+            update(UploaderSession)
+            .where(UploaderSession.id == session.id)
+            .values(last_used_at=datetime.now(timezone.utc))
+        )
     return session
 
 
