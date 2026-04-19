@@ -26,10 +26,12 @@ def upgrade() -> None:
         op.add_column('archive_requests',
             sa.Column('error_message', sa.String(1024), nullable=True))
     # Make file_path nullable for pending archives
-    op.alter_column('archive_requests', 'file_path', nullable=True)
+    op.alter_column('archive_requests', 'file_path',
+                    existing_type=sa.String(1024), nullable=True)
 
 
 def downgrade() -> None:
     op.drop_column('archive_requests', 'status')
     op.drop_column('archive_requests', 'error_message')
-    op.alter_column('archive_requests', 'file_path', nullable=False)
+    op.alter_column('archive_requests', 'file_path',
+                    existing_type=sa.String(1024), nullable=False)
