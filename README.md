@@ -23,6 +23,7 @@ EventDrop is a self-hosted web application for collecting and sharing photos and
 - [Storage Backends](#storage-backends)
 - [Database](#database)
 - [Authentication](#authentication)
+- [Upgrading](#upgrading)
 - [Security Notes](#security-notes)
 
 ---
@@ -35,7 +36,7 @@ EventDrop is a self-hosted web application for collecting and sharing photos and
 - **Automatic thumbnail generation** — creates 400×400 JPEG thumbnails for image previews
 - **QR code generation** — each event has a downloadable QR code that links directly to the upload page
 - **Public or private gallery** — event galleries can be opened to anonymous visitors or kept private
-- **Bulk ZIP download** — download all or selected media as a single ZIP archive with a time-limited link
+- **Bulk ZIP download** — download all or selected media as a single ZIP archive; archives are created asynchronously and the shareable status link remains valid for a configurable number of hours
 - **Email ingestion** — poll a dedicated IMAP or POP3 mailbox and automatically import photo/video attachments
 - **S3-compatible storage** — store media on local disk or any S3-compatible object store (AWS, MinIO, Cloudflare R2, etc.)
 - **SQLite or MySQL** — use embedded SQLite for simple deployments or MySQL for production
@@ -129,7 +130,9 @@ All settings are read from environment variables prefixed with `EVENTDROP_`. The
 | `EVENTDROP_EMAIL_INGESTION_ENABLED` | `true` | Enable the email ingestion background service |
 | `EVENTDROP_EMAIL_POLL_INTERVAL_SECONDS` | `120` | How often (in seconds) to poll configured mailboxes |
 | `EVENTDROP_ARCHIVE_TEMP_PATH` | `/data/tmp` | Directory where ZIP archives are temporarily stored |
-| `EVENTDROP_ARCHIVE_EXPIRY_MINUTES` | `15` | How many minutes a download link remains valid before expiry |
+| `EVENTDROP_DOWNLOAD_LINK_EXPIRY_HOURS` | `48` | How many hours a download link remains valid before expiry |
+| `EVENTDROP_DOWNLOAD_WARN_MAX_FILES` | `500` | File count above which a "large gallery" warning banner is shown on the gallery page |
+| `EVENTDROP_DOWNLOAD_WARN_MAX_SIZE_MB` | `1000` | Total gallery size in MB above which the warning banner is shown |
 | `EVENTDROP_BASE_URL` | `http://localhost:8000` | Public base URL of the application — used in generated upload links and QR codes |
 | `EVENTDROP_MAX_UPLOAD_SIZE_MB` | `500` | Maximum allowed size per uploaded file in megabytes |
 
@@ -291,7 +294,16 @@ Browse uploaded media at `/e/<event_id>/gallery/`. The gallery shows thumbnails 
 
 ### Bulk Download
 
-From the gallery, select individual files or click **Download All**. EventDrop assembles a ZIP archive on demand and provides a time-limited download link (default: 15 minutes). The archive is named after the event and the number of files included.
+From the gallery, select individual files or click **Download All**. Archive creation is asynchronous:
+
+1. The server immediately queues the archive and redirects to a standalone status page at `/downloads/{token}`.
+2. The status page polls for completion and displays a **Download Now** button when the archive is ready.
+3. The page can be bookmarked and reloaded — it works for anonymous users and the link remains valid for `EVENTDROP_DOWNLOAD_LINK_EXPIRY_HOURS` hours (default: 48).
+4. A cleanup job running every 5 minutes removes expired archives and their files from disk.
+
+If the gallery contains a large number of files or a high total size, a warning banner is shown before the download is initiated. The thresholds are controlled by `EVENTDROP_DOWNLOAD_WARN_MAX_FILES` and `EVENTDROP_DOWNLOAD_WARN_MAX_SIZE_MB`.
+
+The archive is named after the event and the number of files included.
 
 ### Upload Messages
 
@@ -534,6 +546,22 @@ EVENTDROP_OIDC_DISPLAY_NAME=Login with Authelia
 ### Admin Access
 
 Users with `is_admin=true` can access the `/admin/` panel. Admin status can be toggled from the admin users page. The initial admin user created from the environment variables always has admin access.
+
+---
+
+## Upgrading
+
+### Database Migrations
+
+When upgrading from a previous version, always run Alembic migrations after updating the application image or code before starting the server:
+
+```bash
+alembic upgrade head
+```
+
+If you are running EventDrop via Docker Compose, the container entrypoint runs `alembic upgrade head` automatically at startup, so no manual step is required in that case.
+
+**Upgrading from versions prior to the async archive feature:** this release adds `status` and `error_message` columns to the `archive_requests` table and makes `file_path` nullable. The migration is handled automatically by Alembic. If you manage migrations manually, run `alembic upgrade head` once after deploying the updated image.
 
 ---
 
