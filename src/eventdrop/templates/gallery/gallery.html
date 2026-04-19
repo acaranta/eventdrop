@@ -130,7 +130,7 @@
 
     {# ---- Contributors panel (collapsible) ---- #}
     {% if contributors %}
-    <details class="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden group">
+    <details class="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden group" {% if uploader_filter %}open{% endif %}>
         <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors list-none">
             <span class="flex items-center gap-2">
                 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -213,7 +213,7 @@
                 <div class="checkbox-wrapper absolute top-2 left-2 z-20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <input type="checkbox" class="media-checkbox h-5 w-5 text-indigo-600 border-gray-300 rounded shadow-sm cursor-pointer"
                            value="{{ item.id }}"
-                           onclick="e => e.stopPropagation()"
+                           onclick="event.stopPropagation()"
                            onchange="onCheckboxChange(this)">
                 </div>
                 {% endif %}
@@ -545,8 +545,7 @@ function getSelectedIds() {
 
 // ---- Item click (lightbox or select) ----
 function handleItemClick(e, item) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'A' || e.target.tagName === 'BUTTON' ||
-        e.target.closest('a') || e.target.closest('button')) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'A' || e.target.tagName === 'BUTTON') {
         return;
     }
     const mime = item.dataset.mime || '';
