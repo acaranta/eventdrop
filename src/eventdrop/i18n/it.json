@@ -284,7 +284,11 @@
     "files_count": "{n} file — {size}",
     "expires_at": "Link valido fino al {date}",
     "bookmark_hint": "Puoi aggiungere questa pagina ai preferiti e tornare più tardi.",
-    "for_event": "Archivio per: {event}"
+    "for_event": "Archivio per: {event}",
+    "batch_page_title": "Scarica archivi",
+    "batch_heading": "I tuoi archivi sono in preparazione",
+    "batch_part": "Parte {n} di {total}",
+    "batch_ready_hint": "Gli archivi diventano disponibili man mano che vengono completati — scarica ciascuno appena appare."
   },
   "account": {
     "title": "Il mio account — EventDrop",

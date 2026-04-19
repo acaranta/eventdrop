@@ -147,6 +147,9 @@ class ArchiveRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     downloaded: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    batch_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
+    part_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_parts: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     # Relationships
     event: Mapped["Event"] = relationship("Event", back_populates="archive_requests")

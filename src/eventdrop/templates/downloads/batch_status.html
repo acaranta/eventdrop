@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}{{ t("downloads.batch_page_title") }}{% endblock %}
+
+{% block content %}
+<script>
+const pollUrl = {{ poll_url | tojson }};
+const eventName = {{ event_name | tojson }};
+const initialParts = {{ archives | length }};
+</script>
+
+<div class="max-w-2xl mx-auto px-4 py-16">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-200 dark:border-gray-700">
+
+        {% if event_name %}
+        <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400 mb-2">{{ t("downloads.for_event").replace("{event}", event_name) }}</p>
+        {% endif %}
+
+        <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">{{ t("downloads.batch_heading") }}</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">{{ t("downloads.batch_ready_hint") }}</p>
+
+        <div id="parts-list" class="space-y-3">
+            {% for archive in archives %}
+            {% set expired = archive.expires_at < now %}
+            <div id="part-{{ archive.part_index }}"
+                 class="flex items-center gap-4 rounded-xl border px-4 py-3
+                 {% if expired %}border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/20
+                 {% elif archive.status == 'ready' %}border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/20
+                 {% elif archive.status == 'failed' %}border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20
+                 {% else %}border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/10{% endif %}">
+
+                {# Status icon #}
+                <div class="flex-shrink-0">
+                    {% if expired %}
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {% elif archive.status == 'ready' %}
+                    <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {% elif archive.status == 'failed' %}
+                    <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                    </svg>
+                    {% else %}
+                    <svg class="w-5 h-5 text-indigo-500 dark:text-indigo-400 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    {% endif %}
+                </div>
+
+                {# Label #}
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {{ t("downloads.batch_part").replace("{n}", (archive.part_index + 1) | string).replace("{total}", archive.total_parts | string) }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 part-status-text">
+                        {% if expired %}{{ t("downloads.status_expired") }}
+                        {% elif archive.status == 'ready' %}{{ t("downloads.status_ready") }}{% if archive.file_count %} — {{ archive.file_count }} files{% if archive.file_size %} ({% if archive.file_size >= 1073741824 %}{{ "%.1f"|format(archive.file_size / 1073741824) }} GB{% else %}{{ "%.0f"|format(archive.file_size / 1048576) }} MB{% endif %}){% endif %}{% endif %}
+                        {% elif archive.status == 'failed' %}{{ t("downloads.status_failed") }}
+                        {% elif archive.status == 'processing' %}{{ t("downloads.status_processing") }}
+                        {% else %}{{ t("downloads.status_pending") }}{% endif %}
+                    </p>
+                </div>
+
+                {# Download button (only when ready) #}
+                {% if archive.status == 'ready' and not expired %}
+                <a href="/api/downloads/{{ archive.token }}/file"
+                   class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                    </svg>
+                    {{ t("downloads.download_now") }}
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <p class="text-xs text-gray-400 dark:text-gray-500 mt-5">{{ t("downloads.bookmark_hint") }}</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const strings = {
+        pending: {{ t("downloads.status_pending") | tojson }},
+        processing: {{ t("downloads.status_processing") | tojson }},
+        ready: {{ t("downloads.status_ready") | tojson }},
+        failed: {{ t("downloads.status_failed") | tojson }},
+        expired: {{ t("downloads.status_expired") | tojson }},
+        downloadNow: {{ t("downloads.download_now") | tojson }},
+        batchPart: {{ t("downloads.batch_part") | tojson }},
+    };
+
+    function fmtSize(bytes) {
+        if (!bytes) return '';
+        return bytes >= 1073741824
+            ? (bytes / 1073741824).toFixed(1) + ' GB'
+            : Math.round(bytes / 1048576) + ' MB';
+    }
+
+    function updatePart(part) {
+        const row = document.getElementById('part-' + part.part_index);
+        if (!row) return;
+
+        const iconEl = row.querySelector('svg');
+        const statusText = row.querySelector('.part-status-text');
+        const label = strings.batchPart
+            .replace('{n}', part.part_index + 1)
+            .replace('{total}', part.total_parts);
+
+        // Update border/bg colours
+        row.className = row.className.replace(/border-\S+|bg-\S+/g, '').trim();
+        let colourClass = 'border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/10';
+        if (part.status === 'ready')   colourClass = 'border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/20';
+        if (part.status === 'failed')  colourClass = 'border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20';
+        if (part.status === 'expired') colourClass = 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/20';
+        row.className += ' ' + colourClass;
+
+        // Status text
+        let txt = strings[part.status] || strings.pending;
+        if (part.status === 'ready' && part.file_count) {
+            txt += ' — ' + part.file_count + ' files';
+            const sz = fmtSize(part.file_size);
+            if (sz) txt += ' (' + sz + ')';
+        }
+        if (statusText) statusText.textContent = txt;
+
+        // Download button
+        const existingBtn = row.querySelector('a[href*="/file"]');
+        if (part.status === 'ready' && part.download_url && !existingBtn) {
+            const btn = document.createElement('a');
+            btn.href = part.download_url;
+            btn.className = 'flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors';
+            btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>${strings.downloadNow}`;
+            row.appendChild(btn);
+        }
+
+        // Spin icon
+        if (iconEl) {
+            iconEl.classList.toggle('animate-spin', part.status === 'pending' || part.status === 'processing');
+        }
+    }
+
+    const allDone = (parts) => parts.every(p => p.status === 'ready' || p.status === 'failed' || p.status === 'expired');
+
+    const pollInterval = setInterval(async () => {
+        try {
+            const res = await fetch(pollUrl);
+            if (!res.ok) return;
+            const data = await res.json();
+            data.parts.forEach(updatePart);
+            if (allDone(data.parts)) clearInterval(pollInterval);
+        } catch (_) {
+            // network hiccup — keep polling
+        }
+    }, 2000);
+})();
+</script>
+{% endblock %}

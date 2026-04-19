@@ -284,7 +284,11 @@
     "files_count": "{n} Dateien — {size}",
     "expires_at": "Link gültig bis {date}",
     "bookmark_hint": "Sie können diese Seite als Lesezeichen speichern und später zurückkehren.",
-    "for_event": "Archiv für: {event}"
+    "for_event": "Archiv für: {event}",
+    "batch_page_title": "Archive herunterladen",
+    "batch_heading": "Ihre Archive werden vorbereitet",
+    "batch_part": "Teil {n} von {total}",
+    "batch_ready_hint": "Archive werden verfügbar, sobald sie fertig sind — laden Sie jedes herunter, sobald es erscheint."
   },
   "account": {
     "title": "Mein Konto — EventDrop",

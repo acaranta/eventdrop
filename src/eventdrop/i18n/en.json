@@ -284,7 +284,11 @@
     "files_count": "{n} files — {size}",
     "expires_at": "Link valid until {date}",
     "bookmark_hint": "You can bookmark this page and come back later.",
-    "for_event": "Archive for: {event}"
+    "for_event": "Archive for: {event}",
+    "batch_page_title": "Download Archives",
+    "batch_heading": "Your archives are being prepared",
+    "batch_part": "Part {n} of {total}",
+    "batch_ready_hint": "Archives become available as they finish — download each one as it appears."
   },
   "account": {
     "title": "My Account — EventDrop",

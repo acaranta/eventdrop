@@ -10,7 +10,7 @@ from eventdrop.database.session import get_db
 from eventdrop.database.models import Event, MediaFile
 from eventdrop.services import event_service
 from eventdrop.services.media_service import delete_media_file, list_event_media, get_regen_status, regenerate_thumbnails_task, regenerate_single_thumbnail
-from eventdrop.services.archive_service import enqueue_archive, get_archive_by_token
+from eventdrop.services.archive_service import enqueue_archive, enqueue_archive_batch, get_archive_by_token, get_archives_by_batch_id
 from eventdrop.storage import get_storage
 from eventdrop.config import settings
 
@@ -67,12 +67,19 @@ async def bulk_download(
     if not valid_ids:
         raise HTTPException(status_code=400, detail="No valid media files specified")
 
-    archive = await enqueue_archive(db, event_id, valid_ids, event.name)
+    archives, batch_id = await enqueue_archive_batch(db, event_id, valid_ids, event.name)
 
+    if len(archives) == 1:
+        return JSONResponse({
+            "token": archives[0].token,
+            "status": "pending",
+            "status_page": f"/downloads/{archives[0].token}",
+        })
     return JSONResponse({
-        "token": archive.token,
+        "batch_id": batch_id,
+        "parts": len(archives),
         "status": "pending",
-        "status_page": f"/downloads/{archive.token}",
+        "status_page": f"/downloads/batch/{batch_id}",
     })
 
 
@@ -93,12 +100,19 @@ async def bulk_download_all(
     if not media_ids:
         raise HTTPException(status_code=400, detail="No media files in this event")
 
-    archive = await enqueue_archive(db, event_id, media_ids, event.name)
+    archives, batch_id = await enqueue_archive_batch(db, event_id, media_ids, event.name)
 
+    if len(archives) == 1:
+        return JSONResponse({
+            "token": archives[0].token,
+            "status": "pending",
+            "status_page": f"/downloads/{archives[0].token}",
+        })
     return JSONResponse({
-        "token": archive.token,
+        "batch_id": batch_id,
+        "parts": len(archives),
         "status": "pending",
-        "status_page": f"/downloads/{archive.token}",
+        "status_page": f"/downloads/batch/{batch_id}",
     })
 
 
@@ -124,6 +138,30 @@ async def download_archive_status(token: str, db: AsyncSession = Depends(get_db)
     elif archive.status == "failed":
         resp["error"] = archive.error_message
     return JSONResponse(resp)
+
+
+@router.get("/downloads/batch/{batch_id}/status")
+async def download_batch_status(batch_id: str, db: AsyncSession = Depends(get_db)):
+    from datetime import datetime, timezone
+    archives = await get_archives_by_batch_id(db, batch_id)
+    if not archives:
+        raise HTTPException(status_code=404, detail="Not found")
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    parts = []
+    for ar in archives:
+        expired = ar.expires_at < now
+        part = {
+            "token": ar.token,
+            "part_index": ar.part_index,
+            "total_parts": ar.total_parts,
+            "status": "expired" if expired else ar.status,
+            "file_count": ar.file_count,
+            "file_size": ar.file_size,
+            "download_url": f"/api/downloads/{ar.token}/file" if ar.status == "ready" and not expired else None,
+            "error": ar.error_message if ar.status == "failed" else None,
+        }
+        parts.append(part)
+    return JSONResponse({"batch_id": batch_id, "parts": parts})
 
 
 @router.get("/downloads/{token}/file")

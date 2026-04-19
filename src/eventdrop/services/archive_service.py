@@ -5,7 +5,7 @@ import secrets
 import uuid
 import zipfile
 from datetime import datetime, timedelta, timezone
-from typing import List
+from typing import List, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,12 +15,37 @@ from eventdrop.database.models import ArchiveRequest, MediaFile
 
 logger = logging.getLogger(__name__)
 
+ITEMS_PER_ARCHIVE = 100
+
+
+async def enqueue_archive_batch(
+    db: AsyncSession,
+    event_id: str,
+    media_ids: List[str],
+    event_name: str,
+) -> Tuple[List[ArchiveRequest], str]:
+    """Split media_ids into chunks, create one ArchiveRequest per chunk, return (archives, batch_id)."""
+    chunks = [media_ids[i:i + ITEMS_PER_ARCHIVE] for i in range(0, len(media_ids), ITEMS_PER_ARCHIVE)]
+    batch_id = str(uuid.uuid4())
+    total_parts = len(chunks)
+    archives = []
+    for idx, chunk in enumerate(chunks):
+        archive = await enqueue_archive(
+            db, event_id, chunk, event_name,
+            batch_id=batch_id, part_index=idx, total_parts=total_parts,
+        )
+        archives.append(archive)
+    return archives, batch_id
+
 
 async def enqueue_archive(
     db: AsyncSession,
     event_id: str,
     media_ids: List[str],
     event_name: str,
+    batch_id: str = None,
+    part_index: int = 0,
+    total_parts: int = 1,
 ) -> ArchiveRequest:
     """Create a pending ArchiveRequest and launch a background task to build the ZIP."""
     token = secrets.token_urlsafe(32)
@@ -36,6 +61,9 @@ async def enqueue_archive(
         file_size=None,
         status="pending",
         expires_at=expires_at,
+        batch_id=batch_id,
+        part_index=part_index,
+        total_parts=total_parts,
     )
     db.add(archive_req)
     await db.commit()
@@ -137,6 +165,15 @@ async def get_archive_by_token(db: AsyncSession, token: str):
         select(ArchiveRequest).where(ArchiveRequest.token == token)
     )
     return result.scalar_one_or_none()
+
+
+async def get_archives_by_batch_id(db: AsyncSession, batch_id: str) -> List[ArchiveRequest]:
+    result = await db.execute(
+        select(ArchiveRequest)
+        .where(ArchiveRequest.batch_id == batch_id)
+        .order_by(ArchiveRequest.part_index)
+    )
+    return list(result.scalars().all())
 
 
 async def archive_cleanup_loop():
