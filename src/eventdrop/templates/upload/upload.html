@@ -165,6 +165,22 @@
         {{ t("upload.select_btn") }}
     </button>
 
+    <!-- Global progress bar -->
+    <div id="global-progress" class="hidden mb-4">
+        <div class="flex h-3 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
+            <div id="gp-done"      class="bg-green-500  transition-all duration-300" style="width:0%"></div>
+            <div id="gp-uploading" class="bg-indigo-500 transition-all duration-300" style="width:0%"></div>
+            <div id="gp-error"     class="bg-red-500    transition-all duration-300" style="width:0%"></div>
+            <div id="gp-queued"    class="bg-gray-400 dark:bg-gray-500 transition-all duration-300" style="width:0%"></div>
+        </div>
+        <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs">
+            <span id="gp-label-done"      class="hidden items-center gap-1.5 text-green-600  dark:text-green-400"><span  class="w-2 h-2 rounded-full bg-green-500  inline-block"></span><span id="gp-count-done">0</span> {{ t("upload.status_done") }}</span>
+            <span id="gp-label-uploading" class="hidden items-center gap-1.5 text-indigo-600 dark:text-indigo-400"><span class="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span><span id="gp-count-uploading">0</span> {{ t("upload.status_uploading") }}</span>
+            <span id="gp-label-error"     class="hidden items-center gap-1.5 text-red-600    dark:text-red-400"><span    class="w-2 h-2 rounded-full bg-red-500    inline-block"></span><span id="gp-count-error">0</span> {{ t("upload.status_error") }}</span>
+            <span id="gp-label-queued"    class="hidden items-center gap-1.5 text-gray-500   dark:text-gray-400"><span   class="w-2 h-2 rounded-full bg-gray-400   inline-block"></span><span id="gp-count-queued">0</span> {{ t("upload.status_queued") }}</span>
+        </div>
+    </div>
+
     <!-- Upload queue -->
     <div id="upload-queue" class="space-y-3 mb-6"></div>
 
@@ -204,7 +220,9 @@ let activeUploads = 0;
 let uploadPending = [];
 const i18n = {
     queued: "{{ t('upload.status_queued') }}",
+    uploading: "{{ t('upload.status_uploading') }}",
     done: "{{ t('upload.status_done') }}",
+    error: "{{ t('upload.status_error') }}",
     errorNetwork: "{{ t('upload.status_error_network') }}",
     retry: "{{ t('upload.retry') }}"
 };
@@ -317,12 +335,39 @@ function addFileToQueue(file) {
     processUploadQueue();
 }
 
+function updateGlobalProgress() {
+    const total = doneCount + errorCount + activeUploads + uploadPending.length;
+    if (total === 0) return;
+
+    const gp = document.getElementById('global-progress');
+    if (gp) gp.classList.remove('hidden');
+
+    const pct = (n) => (n / total * 100).toFixed(2) + '%';
+    const setW = (id, n) => { const el = document.getElementById(id); if (el) el.style.width = pct(n); };
+    setW('gp-done',      doneCount);
+    setW('gp-uploading', activeUploads);
+    setW('gp-error',     errorCount);
+    setW('gp-queued',    uploadPending.length);
+
+    const setLabel = (labelId, countId, n) => {
+        const lbl = document.getElementById(labelId);
+        const cnt = document.getElementById(countId);
+        if (lbl) { lbl.classList.toggle('hidden', n === 0); lbl.classList.toggle('inline-flex', n > 0); }
+        if (cnt) cnt.textContent = n;
+    };
+    setLabel('gp-label-done',      'gp-count-done',      doneCount);
+    setLabel('gp-label-uploading', 'gp-count-uploading', activeUploads);
+    setLabel('gp-label-error',     'gp-count-error',     errorCount);
+    setLabel('gp-label-queued',    'gp-count-queued',    uploadPending.length);
+}
+
 function processUploadQueue() {
     while (activeUploads < CONCURRENT_UPLOADS && uploadPending.length > 0) {
         const { file, id } = uploadPending.shift();
         activeUploads++;
         uploadFile(file, id);
     }
+    updateGlobalProgress();
 }
 
 function uploadFile(file, id) {
@@ -388,6 +433,7 @@ function uploadFile(file, id) {
                     pendingCount++;
                     errorCount--;
                     uploadPending.push({ file, id });
+                    updateGlobalProgress();
                     processUploadQueue();
                 };
                 if (status) status.after(retryBtn);
@@ -396,6 +442,7 @@ function uploadFile(file, id) {
         }
 
         updateSummary();
+        updateGlobalProgress();
         processUploadQueue();
     };
 
@@ -408,6 +455,7 @@ function uploadFile(file, id) {
         if (status) status.innerHTML = `<span class="text-red-600 dark:text-red-400">❌ ${i18n.errorNetwork}</span>`;
         if (item && queue) queue.appendChild(item);
         updateSummary();
+        updateGlobalProgress();
         processUploadQueue();
     };
 

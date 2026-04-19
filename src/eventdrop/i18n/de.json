@@ -224,7 +224,9 @@
     "done_message": "{n} Datei(en) hochgeladen!",
     "view_gallery": "Galerie ansehen →",
     "status_queued": "Wartend",
+    "status_uploading": "Lädt hoch",
     "status_done": "Fertig",
+    "status_error": "Fehler",
     "status_error_network": "Netzwerkfehler",
     "retry": "Erneut versuchen"
   },

@@ -224,7 +224,9 @@
     "done_message": "{n} file caricato/i!",
     "view_gallery": "Vedi galleria →",
     "status_queued": "In coda",
+    "status_uploading": "Caricamento",
     "status_done": "Completato",
+    "status_error": "Errore",
     "status_error_network": "Errore di rete",
     "retry": "Riprova"
   },
