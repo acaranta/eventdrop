@@ -24,18 +24,29 @@ async def enqueue_archive_batch(
     media_ids: List[str],
     event_name: str,
 ) -> Tuple[List[ArchiveRequest], str]:
-    """Split media_ids into chunks, create one ArchiveRequest per chunk, return (archives, batch_id)."""
+    """Split media_ids into chunks, create all DB records upfront, then build them sequentially."""
     chunks = [media_ids[i:i + ITEMS_PER_ARCHIVE] for i in range(0, len(media_ids), ITEMS_PER_ARCHIVE)]
     batch_id = str(uuid.uuid4())
     total_parts = len(chunks)
     archives = []
+    chunk_map = []  # (archive_id, media_ids) pairs for the sequential task
     for idx, chunk in enumerate(chunks):
         archive = await enqueue_archive(
             db, event_id, chunk, event_name,
             batch_id=batch_id, part_index=idx, total_parts=total_parts,
+            spawn_task=False,
         )
         archives.append(archive)
+        chunk_map.append((archive.id, event_id, chunk, event_name))
+
+    asyncio.create_task(_build_batch_sequential(chunk_map))
     return archives, batch_id
+
+
+async def _build_batch_sequential(chunk_map: List[Tuple[str, str, List[str], str]]) -> None:
+    """Build each archive in the batch one at a time."""
+    for archive_id, event_id, media_ids, event_name in chunk_map:
+        await _build_archive_task(archive_id, event_id, media_ids, event_name)
 
 
 async def enqueue_archive(
@@ -46,8 +57,9 @@ async def enqueue_archive(
     batch_id: str = None,
     part_index: int = 0,
     total_parts: int = 1,
+    spawn_task: bool = True,
 ) -> ArchiveRequest:
-    """Create a pending ArchiveRequest and launch a background task to build the ZIP."""
+    """Create a pending ArchiveRequest and optionally launch a background task to build the ZIP."""
     token = secrets.token_urlsafe(32)
     expires_at = datetime.now(timezone.utc) + timedelta(hours=settings.download_link_expiry_hours)
     archive_id = str(uuid.uuid4())
@@ -68,7 +80,8 @@ async def enqueue_archive(
     db.add(archive_req)
     await db.commit()
 
-    asyncio.create_task(_build_archive_task(archive_id, event_id, media_ids, event_name))
+    if spawn_task:
+        asyncio.create_task(_build_archive_task(archive_id, event_id, media_ids, event_name))
     return archive_req
 
 
