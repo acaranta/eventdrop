@@ -441,8 +441,12 @@
         <p class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1" id="download-status">{{ t("gallery.preparing_download") }}</p>
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("gallery.download_wait") }}</p>
         <div class="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div id="download-bar" class="bg-green-500 h-2 rounded-full animate-pulse" style="width: 40%"></div>
+            <div id="download-bar" class="bg-green-500 h-2 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
         </div>
+        <button type="button" id="download-cancel-btn" onclick="cancelDownload()"
+                class="mt-5 px-4 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+            {{ t("cancel") }}
+        </button>
     </div>
 </div>
 {% endblock %}
@@ -469,6 +473,7 @@ const _t = {
     deleteConfirmMsg: {{ t("gallery.delete_confirm_msg") | tojson }},
     deleting: {{ t("gallery.deleting") | tojson }},
     deleteBtn: {{ t("gallery.delete_btn") | tojson }},
+    cancel: {{ t("cancel") | tojson }},
 };
 
 // Gather all media items
@@ -611,6 +616,43 @@ document.addEventListener('keydown', e => {
 });
 
 // ---- Download ----
+let _downloadAbortController = null;
+let _downloadProgressTimer = null;
+
+function cancelDownload() {
+    if (_downloadAbortController) _downloadAbortController.abort();
+    _stopProgressAnimation();
+    document.getElementById('download-overlay').classList.add('hidden');
+}
+
+function _stopProgressAnimation() {
+    if (_downloadProgressTimer) {
+        clearInterval(_downloadProgressTimer);
+        _downloadProgressTimer = null;
+    }
+}
+
+function _startProgressAnimation() {
+    const bar = document.getElementById('download-bar');
+    let pct = 0;
+    bar.style.width = '0%';
+    _downloadProgressTimer = setInterval(() => {
+        // Ease toward 90%: each tick closes 4% of the remaining gap
+        pct += (90 - pct) * 0.04;
+        bar.style.width = pct.toFixed(1) + '%';
+    }, 200);
+}
+
+function _finishProgress(success) {
+    _stopProgressAnimation();
+    const bar = document.getElementById('download-bar');
+    if (success) {
+        bar.style.width = '100%';
+    } else {
+        bar.style.width = '0%';
+    }
+}
+
 async function downloadAll() {
     await startDownload(`/api/events/${eventId}/media/download-all`, {});
 }
@@ -626,23 +668,30 @@ async function startDownload(url, body) {
     const status = document.getElementById('download-status');
     overlay.classList.remove('hidden');
     status.textContent = _t.preparingArchive;
+    _startProgressAnimation();
+    _downloadAbortController = new AbortController();
     try {
         const res = await fetch(url, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(body),
+            signal: _downloadAbortController.signal,
         });
         if (!res.ok) {
             const j = await res.json().catch(() => ({}));
             throw new Error(j.detail || 'Request failed');
         }
         const data = await res.json();
+        _finishProgress(true);
         status.textContent = _t.downloading.replace('{n}', data.file_count || '');
         window.location.href = data.download_url;
         setTimeout(() => overlay.classList.add('hidden'), 3000);
     } catch (e) {
+        _finishProgress(false);
         overlay.classList.add('hidden');
-        alert(_t.downloadFailed + e.message);
+        if (e.name !== 'AbortError') alert(_t.downloadFailed + e.message);
+    } finally {
+        _downloadAbortController = null;
     }
 }
 
