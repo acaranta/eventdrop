@@ -409,6 +409,25 @@
       "smtp_env_hint": "Configura SMTP mediante variables de entorno para activar los emails de restablecimiento de contraseña.",
       "section_admin_email": "Email de admin",
       "save_btn": "Guardar ajustes"
+    },
+    "downloads": {
+      "title": "Descargas — Admin",
+      "heading": "Archivos de descarga",
+      "col_event": "Evento",
+      "col_status": "Estado",
+      "col_parts": "Parte",
+      "col_files": "Archivos",
+      "col_size": "Tamaño",
+      "col_created": "Creado",
+      "col_expires": "Caduca",
+      "col_actions": "Acciones",
+      "btn_view": "Ver",
+      "btn_cancel": "Cancelar",
+      "no_archives": "No hay archivos de descarga aún.",
+      "status_cancelled": "Cancelado",
+      "confirm_delete": "¿Eliminar este archivo y su registro?",
+      "confirm_cancel": "¿Cancelar la generación de este archivo?",
+      "nav_link": "Descargas"
     }
   },
   "errors": {

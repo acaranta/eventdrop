@@ -92,6 +92,12 @@ async def _build_archive_task(
             await db.commit()
             logger.info(f"Building archive {archive_id} for event {event_id}")
 
+            # Re-check: admin may have cancelled while we were starting
+            await db.refresh(archive)
+            if archive.status == "cancelled":
+                logger.info(f"Archive {archive_id} was cancelled before build started")
+                return
+
             storage = get_storage()
 
             result = await db.execute(

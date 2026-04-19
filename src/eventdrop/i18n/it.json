@@ -409,6 +409,25 @@
       "smtp_env_hint": "Configura SMTP tramite variabili d'ambiente per abilitare le email di ripristino password.",
       "section_admin_email": "Email admin",
       "save_btn": "Salva impostazioni"
+    },
+    "downloads": {
+      "title": "Download — Admin",
+      "heading": "Archivi di download",
+      "col_event": "Evento",
+      "col_status": "Stato",
+      "col_parts": "Parte",
+      "col_files": "File",
+      "col_size": "Dimensione",
+      "col_created": "Creato",
+      "col_expires": "Scade",
+      "col_actions": "Azioni",
+      "btn_view": "Visualizza",
+      "btn_cancel": "Annulla",
+      "no_archives": "Nessun archivio di download.",
+      "status_cancelled": "Annullato",
+      "confirm_delete": "Eliminare questo archivio e il file?",
+      "confirm_cancel": "Annullare la generazione di questo archivio?",
+      "nav_link": "Download"
     }
   },
   "errors": {

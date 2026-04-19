@@ -409,6 +409,25 @@
       "smtp_env_hint": "Konfigurieren Sie SMTP über Umgebungsvariablen, um Passwort-Reset-E-Mails zu aktivieren.",
       "section_admin_email": "Admin-E-Mail",
       "save_btn": "Einstellungen speichern"
+    },
+    "downloads": {
+      "title": "Downloads — Admin",
+      "heading": "Download-Archive",
+      "col_event": "Event",
+      "col_status": "Status",
+      "col_parts": "Teil",
+      "col_files": "Dateien",
+      "col_size": "Größe",
+      "col_created": "Erstellt",
+      "col_expires": "Läuft ab",
+      "col_actions": "Aktionen",
+      "btn_view": "Ansehen",
+      "btn_cancel": "Abbrechen",
+      "no_archives": "Noch keine Download-Archive.",
+      "status_cancelled": "Abgebrochen",
+      "confirm_delete": "Diesen Archiv-Eintrag und die Datei löschen?",
+      "confirm_cancel": "Diese Archiv-Erstellung abbrechen?",
+      "nav_link": "Downloads"
     }
   },
   "errors": {

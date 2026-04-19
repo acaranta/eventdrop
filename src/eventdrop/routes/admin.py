@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from datetime import datetime, timezone
 
 from eventdrop.auth.dependencies import require_admin
 from eventdrop.database.session import get_db
-from eventdrop.database.models import User, Event, MediaFile, EventEmailConfig
+from eventdrop.database.models import User, Event, MediaFile, EventEmailConfig, ArchiveRequest
 from eventdrop.services import user_service, event_service
 from eventdrop.storage import get_storage
 from eventdrop.utils.context import build_ctx
@@ -116,6 +117,57 @@ async def admin_settings(request: Request, admin=Depends(require_admin), db: Asy
     return templates.TemplateResponse(request, "admin/settings.html", await build_ctx(
         request, admin, allow_registration=allow_registration
     ))
+
+
+@router.get("/downloads", response_class=HTMLResponse)
+async def admin_downloads(request: Request, admin=Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(ArchiveRequest, Event.name.label("event_name"))
+        .join(Event, ArchiveRequest.event_id == Event.id, isouter=True)
+        .order_by(ArchiveRequest.created_at.desc())
+    )
+    rows = result.all()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    archives = [
+        {
+            "archive": row.ArchiveRequest,
+            "event_name": row.event_name or "",
+            "expired": row.ArchiveRequest.expires_at < now,
+        }
+        for row in rows
+    ]
+    return templates.TemplateResponse(request, "admin/downloads.html", await build_ctx(
+        request, admin, archives=archives, now=now,
+    ))
+
+
+@router.post("/downloads/{archive_id}/cancel")
+async def admin_cancel_archive(archive_id: str, request: Request, admin=Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(ArchiveRequest).where(ArchiveRequest.id == archive_id))
+    archive = result.scalar_one_or_none()
+    if not archive:
+        raise HTTPException(status_code=404)
+    if archive.status in ("pending", "processing"):
+        archive.status = "cancelled"
+        await db.commit()
+    return RedirectResponse(url="/admin/downloads", status_code=303)
+
+
+@router.post("/downloads/{archive_id}/delete")
+async def admin_delete_archive(archive_id: str, request: Request, admin=Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    import os
+    result = await db.execute(select(ArchiveRequest).where(ArchiveRequest.id == archive_id))
+    archive = result.scalar_one_or_none()
+    if not archive:
+        raise HTTPException(status_code=404)
+    if archive.file_path and os.path.exists(archive.file_path):
+        try:
+            os.remove(archive.file_path)
+        except Exception:
+            pass
+    await db.delete(archive)
+    await db.commit()
+    return RedirectResponse(url="/admin/downloads", status_code=303)
 
 
 @router.post("/settings")

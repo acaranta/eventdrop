@@ -409,6 +409,25 @@
       "smtp_env_hint": "Configure SMTP via environment variables to enable password reset emails.",
       "section_admin_email": "Admin Email",
       "save_btn": "Save Settings"
+    },
+    "downloads": {
+      "title": "Downloads — Admin",
+      "heading": "Download Archives",
+      "col_event": "Event",
+      "col_status": "Status",
+      "col_parts": "Part",
+      "col_files": "Files",
+      "col_size": "Size",
+      "col_created": "Created",
+      "col_expires": "Expires",
+      "col_actions": "Actions",
+      "btn_view": "View",
+      "btn_cancel": "Cancel",
+      "no_archives": "No download archives yet.",
+      "status_cancelled": "Cancelled",
+      "confirm_delete": "Delete this archive record and file?",
+      "confirm_cancel": "Cancel this archive generation?",
+      "nav_link": "Downloads"
     }
   },
   "errors": {

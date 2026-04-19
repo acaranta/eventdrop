@@ -409,6 +409,25 @@
       "smtp_env_hint": "Configurez SMTP via les variables d'environnement pour activer les e-mails de réinitialisation.",
       "section_admin_email": "E-mail admin",
       "save_btn": "Enregistrer les paramètres"
+    },
+    "downloads": {
+      "title": "Téléchargements — Admin",
+      "heading": "Archives de téléchargement",
+      "col_event": "Événement",
+      "col_status": "Statut",
+      "col_parts": "Partie",
+      "col_files": "Fichiers",
+      "col_size": "Taille",
+      "col_created": "Créé",
+      "col_expires": "Expire",
+      "col_actions": "Actions",
+      "btn_view": "Voir",
+      "btn_cancel": "Annuler",
+      "no_archives": "Aucune archive de téléchargement.",
+      "status_cancelled": "Annulé",
+      "confirm_delete": "Supprimer cette archive et son fichier ?",
+      "confirm_cancel": "Annuler la génération de cette archive ?",
+      "nav_link": "Téléchargements"
     }
   },
   "errors": {
