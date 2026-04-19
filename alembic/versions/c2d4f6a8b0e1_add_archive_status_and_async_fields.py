@@ -15,10 +15,16 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column('archive_requests',
-        sa.Column('status', sa.String(20), nullable=False, server_default='ready'))
-    op.add_column('archive_requests',
-        sa.Column('error_message', sa.String(1024), nullable=True))
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    existing_cols = {col['name'] for col in inspector.get_columns('archive_requests')}
+
+    if 'status' not in existing_cols:
+        op.add_column('archive_requests',
+            sa.Column('status', sa.String(20), nullable=False, server_default='ready'))
+    if 'error_message' not in existing_cols:
+        op.add_column('archive_requests',
+            sa.Column('error_message', sa.String(1024), nullable=True))
     # Make file_path nullable for pending archives
     op.alter_column('archive_requests', 'file_path', nullable=True)
 
