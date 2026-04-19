@@ -6,10 +6,15 @@
 const initialStatus = {{ archive.status | tojson }};
 const pollUrl = {{ poll_url | tojson }};
 const fileUrl = {{ file_url | tojson }};
+const eventName = {{ event_name | tojson }};
 </script>
 
 <div class="max-w-lg mx-auto px-4 py-16">
     <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-200 dark:border-gray-700 text-center">
+
+        {% if event_name %}
+        <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400 mb-5">{{ t("downloads.for_event").replace("{event}", event_name) }}</p>
+        {% endif %}
 
         {# --- Expired state --- #}
         {% if expired %}
@@ -76,10 +81,7 @@ const fileUrl = {{ file_url | tojson }};
         <h1 id="status-heading" class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             {% if archive.status == "processing" %}{{ t("downloads.status_processing") }}{% else %}{{ t("downloads.status_pending") }}{% endif %}
         </h1>
-        <div class="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
-            <div id="progress-bar" class="bg-indigo-500 h-2 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
-        </div>
-        <p class="text-xs text-gray-400 dark:text-gray-500">{{ t("downloads.bookmark_hint") }}</p>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mt-4">{{ t("downloads.bookmark_hint") }}</p>
         {% endif %}
 
     </div>
@@ -100,24 +102,12 @@ const fileUrl = {{ file_url | tojson }};
         expired: {{ t("downloads.status_expired") | tojson }},
         downloadNow: {{ t("downloads.download_now") | tojson }},
         bookmarkHint: {{ t("downloads.bookmark_hint") | tojson }},
+        forEvent: {{ t("downloads.for_event") | tojson }},
     };
 
-    let progressPct = 0;
-    const progressBar = document.getElementById('progress-bar');
     const statusHeading = document.getElementById('status-heading');
 
-    // Animate progress bar easing toward 90% while still pending/processing
-    const progressTimer = setInterval(() => {
-        progressPct += (90 - progressPct) * 0.04;
-        if (progressBar) progressBar.style.width = progressPct.toFixed(1) + '%';
-    }, 500);
-
-    function stopProgress() {
-        clearInterval(progressTimer);
-    }
-
     function showReady(data) {
-        stopProgress();
 
         // Build size string
         let sizeStr = '';
@@ -133,6 +123,7 @@ const fileUrl = {{ file_url | tojson }};
         if (!card) return;
 
         card.innerHTML = `
+            ${eventName ? `<p class="text-sm font-medium text-indigo-600 dark:text-indigo-400 mb-5">${strings.forEvent.replace('{event}', eventName)}</p>` : ''}
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/40 mb-5">
                 <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -152,7 +143,6 @@ const fileUrl = {{ file_url | tojson }};
     }
 
     function showFailed(data) {
-        stopProgress();
         if (statusHeading) statusHeading.textContent = strings.failed;
         const icon = document.getElementById('status-icon');
         if (icon) {
@@ -161,7 +151,6 @@ const fileUrl = {{ file_url | tojson }};
             icon.parentElement.classList.remove('bg-indigo-100', 'dark:bg-indigo-900/40');
             icon.parentElement.classList.add('bg-red-100', 'dark:bg-red-900/40');
         }
-        if (progressBar) progressBar.style.width = '0%';
     }
 
     const pollInterval = setInterval(async () => {

@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
 
+from eventdrop.database.models import Event
 from eventdrop.database.session import get_db
 from eventdrop.services.archive_service import get_archive_by_token
 from eventdrop.templating import templates
@@ -18,10 +19,13 @@ async def download_status_page(token: str, request: Request, db: AsyncSession = 
         raise HTTPException(status_code=404, detail="Download link not found")
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     expired = archive.expires_at < now
+    event = await db.get(Event, archive.event_id)
+    event_name = event.name if event else ""
     return templates.TemplateResponse(request, "downloads/status.html", await build_ctx(
         request, None,
         archive=archive,
         expired=expired,
+        event_name=event_name,
         poll_url=f"/api/downloads/{token}/status",
         file_url=f"/api/downloads/{token}/file",
     ))

@@ -282,7 +282,8 @@
     "download_now": "Download Now",
     "files_count": "{n} files — {size}",
     "expires_at": "Link valid until {date}",
-    "bookmark_hint": "You can bookmark this page and come back later."
+    "bookmark_hint": "You can bookmark this page and come back later.",
+    "for_event": "Archive for: {event}"
   },
   "account": {
     "title": "My Account — EventDrop",

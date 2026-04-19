@@ -282,7 +282,8 @@
     "download_now": "Jetzt herunterladen",
     "files_count": "{n} Dateien — {size}",
     "expires_at": "Link gültig bis {date}",
-    "bookmark_hint": "Sie können diese Seite als Lesezeichen speichern und später zurückkehren."
+    "bookmark_hint": "Sie können diese Seite als Lesezeichen speichern und später zurückkehren.",
+    "for_event": "Archiv für: {event}"
   },
   "account": {
     "title": "Mein Konto — EventDrop",

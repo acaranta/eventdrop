@@ -282,7 +282,8 @@
     "download_now": "Descargar ahora",
     "files_count": "{n} archivos — {size}",
     "expires_at": "Enlace válido hasta {date}",
-    "bookmark_hint": "Puedes marcar esta página y volver más tarde."
+    "bookmark_hint": "Puedes marcar esta página y volver más tarde.",
+    "for_event": "Archivo para: {event}"
   },
   "account": {
     "title": "Mi cuenta — EventDrop",

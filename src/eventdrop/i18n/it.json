@@ -282,7 +282,8 @@
     "download_now": "Scarica ora",
     "files_count": "{n} file — {size}",
     "expires_at": "Link valido fino al {date}",
-    "bookmark_hint": "Puoi aggiungere questa pagina ai preferiti e tornare più tardi."
+    "bookmark_hint": "Puoi aggiungere questa pagina ai preferiti e tornare più tardi.",
+    "for_event": "Archivio per: {event}"
   },
   "account": {
     "title": "Il mio account — EventDrop",
