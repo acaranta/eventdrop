@@ -10,7 +10,7 @@ from eventdrop.database.session import get_db
 from eventdrop.database.models import Event, MediaFile
 from eventdrop.services import event_service
 from eventdrop.services.media_service import delete_media_file, list_event_media
-from eventdrop.services.archive_service import create_archive, get_archive_by_token
+from eventdrop.services.archive_service import enqueue_archive, get_archive_by_token
 from eventdrop.storage import get_storage
 from eventdrop.config import settings
 
@@ -67,14 +67,12 @@ async def bulk_download(
     if not valid_ids:
         raise HTTPException(status_code=400, detail="No valid media files specified")
 
-    storage = get_storage()
-    archive = await create_archive(db, storage, event_id, valid_ids, event.name)
-    await db.commit()
+    archive = await enqueue_archive(db, event_id, valid_ids, event.name)
 
     return JSONResponse({
-        "download_url": f"/api/downloads/{archive.token}",
-        "expires_at": archive.expires_at.isoformat(),
-        "file_count": archive.file_count,
+        "token": archive.token,
+        "status": "pending",
+        "status_page": f"/downloads/{archive.token}",
     })
 
 
@@ -95,18 +93,40 @@ async def bulk_download_all(
     if not media_ids:
         raise HTTPException(status_code=400, detail="No media files in this event")
 
-    storage = get_storage()
-    archive = await create_archive(db, storage, event_id, media_ids, event.name)
-    await db.commit()
+    archive = await enqueue_archive(db, event_id, media_ids, event.name)
 
     return JSONResponse({
-        "download_url": f"/api/downloads/{archive.token}",
-        "expires_at": archive.expires_at.isoformat(),
-        "file_count": archive.file_count,
+        "token": archive.token,
+        "status": "pending",
+        "status_page": f"/downloads/{archive.token}",
     })
 
 
-@router.get("/downloads/{token}")
+@router.get("/downloads/{token}/status")
+async def download_archive_status(token: str, db: AsyncSession = Depends(get_db)):
+    from datetime import datetime, timezone
+    archive = await get_archive_by_token(db, token)
+    if not archive:
+        raise HTTPException(status_code=404, detail="Not found")
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    if archive.expires_at < now:
+        raise HTTPException(status_code=410, detail="Expired")
+    resp = {
+        "status": archive.status,
+        "file_count": archive.file_count,
+        "file_size": archive.file_size,
+        "download_url": None,
+        "error": None,
+        "expires_at": archive.expires_at.isoformat(),
+    }
+    if archive.status == "ready":
+        resp["download_url"] = f"/api/downloads/{token}/file"
+    elif archive.status == "failed":
+        resp["error"] = archive.error_message
+    return JSONResponse(resp)
+
+
+@router.get("/downloads/{token}/file")
 async def download_archive(token: str, db: AsyncSession = Depends(get_db)):
     from datetime import datetime, timezone
     archive = await get_archive_by_token(db, token)
@@ -116,14 +136,11 @@ async def download_archive(token: str, db: AsyncSession = Depends(get_db)):
     if archive.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
         raise HTTPException(status_code=410, detail="Download link has expired")
 
-    if archive.downloaded:
-        raise HTTPException(status_code=410, detail="Download link has already been used")
+    if archive.status != "ready":
+        raise HTTPException(status_code=425, detail="Archive not ready yet")
 
     if not os.path.exists(archive.file_path):
         raise HTTPException(status_code=404, detail="Archive file not found")
-
-    archive.downloaded = True
-    await db.commit()
 
     filename = os.path.basename(archive.file_path)
     # Remove UUID prefix from filename

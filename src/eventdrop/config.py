@@ -43,7 +43,9 @@ class Settings(BaseSettings):
 
     # Archive
     archive_temp_path: str = "/data/tmp"
-    archive_expiry_minutes: int = 15
+    download_link_expiry_hours: int = 48
+    download_warn_max_files: int = 500
+    download_warn_max_size_mb: int = 1000
 
     # SMTP for sending emails
     smtp_host: str = ""

@@ -1,0 +1,72 @@
+services:
+  eventdrop:
+    build: .
+    container_name: eventdrop
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - eventdrop_data:/data
+    depends_on:
+      eventdrop-db:
+        condition: service_healthy
+    environment:
+      EVENTDROP_ADMIN_USERNAME: "admin"
+      EVENTDROP_ADMIN_PASSWORD: "changeme"
+      EVENTDROP_SECRET_KEY: "change-this-to-a-random-secret"
+      # EVENTDROP_DB_TYPE: "sqlite"
+      # EVENTDROP_DB_PATH: "/data/eventdrop.db"
+      # Database — MariaDB/MySQL
+      EVENTDROP_DB_TYPE: "mysql"
+      EVENTDROP_DB_HOST: "eventdrop-db"
+      EVENTDROP_DB_PORT: "3306"
+      EVENTDROP_DB_NAME: "eventdrop"
+      EVENTDROP_DB_USER: "eventdrop"
+      EVENTDROP_DB_PASSWORD: "850c023d5372e9a6c5c25566da2c7af8"      
+      # EVENTDROP_STORAGE_TYPE: "local"
+      # EVENTDROP_STORAGE_LOCAL_PATH: "/data/media"
+      EVENTDROP_BASE_URL: "http://localhost:8000"
+      EVENTDROP_MAX_UPLOAD_SIZE_MB: "500"
+      EVENTDROP_EMAIL_INGESTION_ENABLED: "true"
+      EVENTDROP_EMAIL_POLL_INTERVAL_SECONDS: "120"
+      EVENTDROP_ARCHIVE_TEMP_PATH: "/data/tmp"
+      EVENTDROP_DOWNLOAD_LINK_EXPIRY_HOURS: "48"
+      EVENTDROP_DOWNLOAD_WARN_MAX_FILES: "500"
+      EVENTDROP_DOWNLOAD_WARN_MAX_SIZE_MB: "1000"
+      # Trust forwarded IP headers from the reverse proxy
+      UVICORN_FORWARDED_ALLOW_IPS: "*"
+      # SMTP (required for password reset emails)
+      EVENTDROP_SMTP_HOST: "ssl0.ovh.net"
+      EVENTDROP_SMTP_PORT: "587"
+      EVENTDROP_SMTP_USERNAME: "notifs@minixer.com"
+      EVENTDROP_SMTP_PASSWORD: "Gimini46!"
+      EVENTDROP_SMTP_FROM: "notifs@minixer.com"
+      EVENTDROP_SMTP_TLS: "true"
+      EVENTDROP_STORAGE_TYPE: s3
+      EVENTDROP_S3_BUCKET: eventdrop
+      EVENTDROP_S3_ACCESS_KEY: e7ea968fae244554af0e3230fd1a3436
+      EVENTDROP_S3_SECRET_KEY: d79063ee409c42b1b1601750776886c7
+      EVENTDROP_S3_REGION: gra
+      EVENTDROP_S3_ENDPOINT: https://s3.gra.io.cloud.ovh.net/
+
+  eventdrop-db:
+    image: mariadb:11
+    container_name: eventdrop_db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: "b7d652809afe47e31609ca8ba7aa4a9c7f4dd68464f793fad8cf5844db9910a0"
+      MARIADB_DATABASE: "eventdrop"
+      MARIADB_USER: "eventdrop"
+      MARIADB_PASSWORD: "850c023d5372e9a6c5c25566da2c7af8"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  eventdrop_data:
+  db_data:
