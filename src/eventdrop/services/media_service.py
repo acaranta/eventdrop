@@ -302,7 +302,7 @@ def get_regen_status(event_id: str) -> dict:
     return _regen_tasks.get(event_id, {"status": "idle"})
 
 
-async def regenerate_thumbnails_task(event_id: str) -> None:
+async def regenerate_thumbnails_task(event_id: str, missing_only: bool = False) -> None:
     from eventdrop.database.engine import AsyncSessionLocal
     from eventdrop.storage import get_storage
 
@@ -310,9 +310,10 @@ async def regenerate_thumbnails_task(event_id: str) -> None:
 
     async with AsyncSessionLocal() as db:
         try:
-            result = await db.execute(
-                select(MediaFile).where(MediaFile.event_id == event_id)
-            )
+            query = select(MediaFile).where(MediaFile.event_id == event_id)
+            if missing_only:
+                query = query.where(MediaFile.thumb_path.is_(None))
+            result = await db.execute(query)
             media_files = list(result.scalars().all())
             _regen_tasks[event_id]["total"] = len(media_files)
 

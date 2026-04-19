@@ -126,6 +126,7 @@
       "btn_upload": "Déposer",
       "btn_gallery": "Galerie",
       "btn_regen_thumbs": "Regénérer les miniatures",
+      "btn_regen_missing_thumbs": "Générer les miniatures manquantes",
       "regen_running": "Régénération… {done}/{total}",
       "regen_done": "Terminé — {done} miniatures",
       "regen_failed_msg": "Échec de la régénération",

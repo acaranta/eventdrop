@@ -90,11 +90,20 @@
                                 </a>
                                 <button type="button"
                                         id="regen-btn-{{ event.id }}"
-                                        onclick="startRegen('{{ event.id }}')"
+                                        onclick="startRegen('{{ event.id }}', 'regenerate')"
                                         title="{{ t('events.list.btn_regen_thumbs') }}"
                                         class="inline-flex items-center p-1.5 text-xs font-medium text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/30 hover:bg-orange-100 dark:hover:bg-orange-900/50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                                    </svg>
+                                </button>
+                                <button type="button"
+                                        id="regen-missing-btn-{{ event.id }}"
+                                        onclick="startRegen('{{ event.id }}', 'regenerate-missing')"
+                                        title="{{ t('events.list.btn_regen_missing_thumbs') }}"
+                                        class="inline-flex items-center p-1.5 text-xs font-medium text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
                                     </svg>
                                 </button>
                                 <form method="post" action="/admin/events/{{ event.id }}/delete" class="inline"
@@ -133,18 +142,24 @@
 
 {% block scripts %}
 <script>
-function startRegen(eventId) {
-    const btn = document.getElementById('regen-btn-' + eventId);
-    btn.disabled = true;
-    fetch('/api/events/' + eventId + '/thumbnails/regenerate', { method: 'POST' })
+function setRegenButtonsDisabled(eventId, disabled) {
+    const b1 = document.getElementById('regen-btn-' + eventId);
+    const b2 = document.getElementById('regen-missing-btn-' + eventId);
+    if (b1) b1.disabled = disabled;
+    if (b2) b2.disabled = disabled;
+}
+
+function startRegen(eventId, endpoint) {
+    setRegenButtonsDisabled(eventId, true);
+    fetch('/api/events/' + eventId + '/thumbnails/' + endpoint, { method: 'POST' })
         .then(r => {
             if (r.status === 202 || r.status === 409) {
                 pollRegen(eventId);
             } else {
-                btn.disabled = false;
+                setRegenButtonsDisabled(eventId, false);
             }
         })
-        .catch(() => { btn.disabled = false; });
+        .catch(() => { setRegenButtonsDisabled(eventId, false); });
 }
 
 function pollRegen(eventId) {
@@ -171,7 +186,7 @@ function pollRegen(eventId) {
                 document.getElementById('regen-label-' + eventId).textContent = label;
                 if (d.status !== 'running') {
                     clearInterval(timer);
-                    document.getElementById('regen-btn-' + eventId).disabled = false;
+                    setRegenButtonsDisabled(eventId, false);
                 }
             });
     }, 1000);

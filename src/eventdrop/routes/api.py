@@ -227,7 +227,24 @@ async def start_thumbnail_regeneration(
         return JSONResponse({"status": "already_running"}, status_code=409)
 
     import asyncio
-    asyncio.create_task(regenerate_thumbnails_task(event_id))
+    asyncio.create_task(regenerate_thumbnails_task(event_id, missing_only=False))
+    return JSONResponse({"status": "started"}, status_code=202)
+
+
+@router.post("/events/{event_id}/thumbnails/regenerate-missing")
+async def start_thumbnail_regeneration_missing(
+    event_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    await get_event_and_check_access(event_id, request, db, require_owner=True)
+
+    status = get_regen_status(event_id)
+    if status.get("status") == "running":
+        return JSONResponse({"status": "already_running"}, status_code=409)
+
+    import asyncio
+    asyncio.create_task(regenerate_thumbnails_task(event_id, missing_only=True))
     return JSONResponse({"status": "started"}, status_code=202)
 
 
