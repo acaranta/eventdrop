@@ -125,6 +125,7 @@
       "btn_edit": "Bearbeiten",
       "btn_upload": "Hochladen",
       "btn_gallery": "Galerie",
+      "btn_regen_thumb_single": "Vorschaubild neu erstellen",
       "btn_regen_thumbs": "Vorschaubilder neu erstellen",
       "btn_regen_missing_thumbs": "Fehlende Vorschaubilder erstellen",
       "regen_running": "Neu erstellen… {done}/{total}",

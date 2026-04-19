@@ -125,6 +125,7 @@
       "btn_edit": "Modifier",
       "btn_upload": "Déposer",
       "btn_gallery": "Galerie",
+      "btn_regen_thumb_single": "Regénérer la miniature",
       "btn_regen_thumbs": "Regénérer les miniatures",
       "btn_regen_missing_thumbs": "Générer les miniatures manquantes",
       "regen_running": "Régénération… {done}/{total}",

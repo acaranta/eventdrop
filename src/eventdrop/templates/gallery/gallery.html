@@ -227,24 +227,28 @@
 
                 <!-- Media thumbnail -->
                 {% if item.mime_type and item.mime_type.startswith('image/') %}
-                <img src="{{ item.thumb_url }}" alt="{{ item.filename }}"
+                <img data-thumb="{{ item.id }}" src="{{ item.thumb_url }}" alt="{{ item.filename }}"
                      class="w-full h-full object-cover transition-opacity hover:opacity-90 select-none"
                      loading="lazy"
                      draggable="false">
                 {% elif item.mime_type and item.mime_type.startswith('video/') %}
-                <div class="relative w-full h-full bg-gray-900 dark:bg-gray-900">
+                <div data-thumb-area="{{ item.id }}" class="relative w-full h-full bg-gray-900 dark:bg-gray-900">
                     {% if item.thumb_url %}
-                    <img src="{{ item.thumb_url }}" alt="{{ item.filename }}"
+                    <img data-thumb="{{ item.id }}" src="{{ item.thumb_url }}" alt="{{ item.filename }}"
                          class="w-full h-full object-cover transition-opacity hover:opacity-90 select-none"
                          loading="lazy"
                          draggable="false">
+                    {% else %}
+                    <img data-thumb="{{ item.id }}" src="" alt="{{ item.filename }}"
+                         class="w-full h-full object-cover hidden select-none"
+                         draggable="false">
                     {% endif %}
-                    <div class="absolute inset-0 flex flex-col items-center justify-center {% if item.thumb_url %}bg-black/30{% endif %}">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center {% if item.thumb_url %}bg-black/30{% endif %}" id="video-overlay-{{ item.id }}">
                         <svg class="w-10 h-10 text-white/80 drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
                         </svg>
                         {% if not item.thumb_url %}
-                        <p class="text-xs text-white/50 truncate px-2 max-w-full mt-1">{{ item.filename }}</p>
+                        <p class="text-xs text-white/50 truncate px-2 max-w-full mt-1" id="video-label-{{ item.id }}">{{ item.filename }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -268,6 +272,14 @@
                         </a>
                         {% endif %}
                         {% if can_delete %}
+                        <button type="button"
+                                onclick="regenSingleThumb('{{ item.id }}', this, event)"
+                                class="p-1 rounded bg-orange-500/70 hover:bg-orange-500/90 transition-colors"
+                                title="{{ t('events.list.btn_regen_thumb_single') }}">
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                            </svg>
+                        </button>
                         <button type="button"
                                 onclick="deleteSingle('{{ item.id }}', event)"
                                 class="p-1 rounded bg-red-500/70 hover:bg-red-500/90 transition-colors"
@@ -718,6 +730,29 @@ async function executeDelete() {
 function deleteSingle(id, e) {
     if (e) e.stopPropagation();
     openDeleteModal([id]);
+}
+
+async function regenSingleThumb(mediaId, btn, e) {
+    if (e) e.stopPropagation();
+    btn.disabled = true;
+    const origHTML = btn.innerHTML;
+    btn.innerHTML = '<svg class="w-3.5 h-3.5 text-white animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>';
+    try {
+        const r = await fetch(`/api/events/${eventId}/media/${mediaId}/thumbnail/regenerate`, {method: 'POST'});
+        const d = await r.json();
+        const img = document.querySelector(`img[data-thumb="${mediaId}"]`);
+        if (d.thumb_url && img) {
+            img.src = d.thumb_url + '?t=' + Date.now();
+            img.classList.remove('hidden');
+            // Update video overlay background if present
+            const overlay = document.getElementById('video-overlay-' + mediaId);
+            if (overlay) overlay.className = overlay.className.replace('flex flex-col items-center justify-center', 'flex flex-col items-center justify-center bg-black/30');
+            const label = document.getElementById('video-label-' + mediaId);
+            if (label) label.remove();
+        }
+    } catch (_) {}
+    btn.innerHTML = origHTML;
+    btn.disabled = false;
 }
 
 // Close modals on Escape

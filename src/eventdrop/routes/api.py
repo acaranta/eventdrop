@@ -9,7 +9,7 @@ import os
 from eventdrop.database.session import get_db
 from eventdrop.database.models import Event, MediaFile
 from eventdrop.services import event_service
-from eventdrop.services.media_service import delete_media_file, list_event_media, get_regen_status, regenerate_thumbnails_task
+from eventdrop.services.media_service import delete_media_file, list_event_media, get_regen_status, regenerate_thumbnails_task, regenerate_single_thumbnail
 from eventdrop.services.archive_service import enqueue_archive, get_archive_by_token
 from eventdrop.storage import get_storage
 from eventdrop.config import settings
@@ -212,6 +212,25 @@ async def delete_single_media(
     await db.commit()
 
     return JSONResponse({"deleted": success})
+
+
+@router.post("/events/{event_id}/media/{media_id}/thumbnail/regenerate")
+async def regenerate_media_thumbnail(
+    event_id: str,
+    media_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    await get_event_and_check_access(event_id, request, db, require_owner=True)
+    storage = get_storage()
+    try:
+        new_thumb_path = await regenerate_single_thumbnail(db, storage, media_id, event_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    if new_thumb_path is None:
+        return JSONResponse({"thumb_url": None})
+    thumb_url = await storage.get_url(new_thumb_path)
+    return JSONResponse({"thumb_url": thumb_url})
 
 
 @router.post("/events/{event_id}/thumbnails/regenerate")

@@ -298,6 +298,48 @@ async def list_event_media(db: AsyncSession, event_id: str) -> list[MediaFile]:
     return list(result.scalars().all())
 
 
+async def regenerate_single_thumbnail(
+    db: AsyncSession,
+    storage: StorageBackend,
+    media_id: str,
+    event_id: str,
+) -> Optional[str]:
+    """Regenerate thumbnail for a single media file. Returns new thumb_path or None."""
+    result = await db.execute(
+        select(MediaFile).where(MediaFile.id == media_id, MediaFile.event_id == event_id)
+    )
+    mf = result.scalar_one_or_none()
+    if not mf:
+        return None
+
+    file_obj = await storage.retrieve(mf.stored_path)
+    file_data = file_obj.read()
+
+    if mf.thumb_path:
+        try:
+            await storage.delete(mf.thumb_path)
+        except Exception:
+            pass
+
+    thumb_data = generate_thumbnail(file_data, mf.mime_type)
+    new_thumb_path = None
+
+    if thumb_data:
+        file_datetime = extract_exif_datetime(file_data, mf.mime_type)
+        new_thumb_path = build_storage_path(
+            event_id,
+            mf.uploader_email,
+            mf.original_filename,
+            file_datetime,
+            prefix="thumb_",
+        )
+        await storage.store(new_thumb_path, io.BytesIO(thumb_data), "image/jpeg")
+
+    mf.thumb_path = new_thumb_path
+    await db.commit()
+    return new_thumb_path
+
+
 def get_regen_status(event_id: str) -> dict:
     return _regen_tasks.get(event_id, {"status": "idle"})
 
