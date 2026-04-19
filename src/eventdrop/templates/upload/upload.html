@@ -199,6 +199,9 @@
 {% if uploader_email or user %}
 <script>
 const eventId = "{{ event.id }}";
+const CONCURRENT_UPLOADS = 5;
+let activeUploads = 0;
+let uploadPending = [];
 let pendingCount = 0;
 let doneCount = 0;
 let errorCount = 0;
@@ -293,8 +296,8 @@ function addFileToQueue(file) {
     info.className = 'flex-1 min-w-0';
     info.innerHTML = `
         <div class="flex items-center justify-between gap-2 mb-1">
-            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">${file.name}</p>
-            <span id="${id}-status" class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">${formatFileSize(file.size)}</span>
+            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">${file.name} <span class="text-xs font-normal text-gray-400">${formatFileSize(file.size)}</span></p>
+            <span id="${id}-status" class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">Queued</span>
         </div>
         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
             <div id="${id}-bar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-200" style="width: 0%"></div>
@@ -304,7 +307,16 @@ function addFileToQueue(file) {
 
     queue.appendChild(item);
 
-    uploadFile(file, id);
+    uploadPending.push({ file, id });
+    processUploadQueue();
+}
+
+function processUploadQueue() {
+    while (activeUploads < CONCURRENT_UPLOADS && uploadPending.length > 0) {
+        const { file, id } = uploadPending.shift();
+        activeUploads++;
+        uploadFile(file, id);
+    }
 }
 
 function uploadFile(file, id) {
@@ -312,6 +324,9 @@ function uploadFile(file, id) {
     formData.append('file', file);
     formData.append('upload_message', batchMessage || '');
     formData.append('message_is_public', batchMessagePublic ? 'true' : 'false');
+
+    const status0 = document.getElementById(`${id}-status`);
+    if (status0) status0.textContent = '0%';
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `/api/e/${eventId}/upload`);
@@ -328,6 +343,7 @@ function uploadFile(file, id) {
 
     xhr.onload = function() {
         pendingCount--;
+        activeUploads--;
         const bar = document.getElementById(`${id}-bar`);
         const status = document.getElementById(`${id}-status`);
         const item = document.getElementById(id);
@@ -359,27 +375,30 @@ function uploadFile(file, id) {
                 retryBtn.textContent = 'Retry';
                 retryBtn.className = 'ml-2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline';
                 retryBtn.onclick = function() {
-                    // Reset state
                     if (bar) { bar.style.width = '0%'; bar.className = 'bg-indigo-500 h-1.5 rounded-full transition-all duration-200'; }
-                    if (status) status.textContent = '0%';
+                    if (status) status.textContent = 'Queued';
                     retryBtn.remove();
                     pendingCount++;
                     errorCount--;
-                    uploadFile(file, id);
+                    uploadPending.push({ file, id });
+                    processUploadQueue();
                 };
                 if (status) status.after(retryBtn);
             }
         }
 
         updateSummary();
+        processUploadQueue();
     };
 
     xhr.onerror = function() {
         pendingCount--;
+        activeUploads--;
         errorCount++;
         const status = document.getElementById(`${id}-status`);
         if (status) status.innerHTML = '<span class="text-red-600 dark:text-red-400">❌ Network error</span>';
         updateSummary();
+        processUploadQueue();
     };
 
     xhr.send(formData);
