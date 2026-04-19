@@ -469,8 +469,8 @@ let pendingDeleteIds = [];
 const canDelete = {{ 'true' if can_delete else 'false' }};
 const canDownload = {{ 'true' if can_download else 'false' }};
 // Active filter state exposed as globals
-window.UPLOADER_FILTER = {{ ('"' ~ uploader_filter ~ '"') if uploader_filter else 'null' }};
-window.SOURCE_FILTER = {{ ('"' ~ source_filter ~ '"') if source_filter else 'null' }};
+window.UPLOADER_FILTER = {{ uploader_filter | tojson }};
+window.SOURCE_FILTER = {{ source_filter | tojson }};
 
 // Translated strings for JS
 const _t = {
