@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 _regen_tasks: dict[str, dict] = {}
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, update as sa_update
 
 from eventdrop.database.models import MediaFile, UploaderSession
 from eventdrop.storage.base import StorageBackend
@@ -422,7 +422,12 @@ async def get_uploader_by_token(db: AsyncSession, token: str) -> Optional[Upload
     )
     session = result.scalar_one_or_none()
     if session:
-        session.last_used_at = datetime.now(timezone.utc)
+        await db.execute(
+            sa_update(UploaderSession)
+            .where(UploaderSession.id == session.id)
+            .values(last_used_at=datetime.now(timezone.utc))
+            .execution_options(synchronize_session=False)
+        )
     return session
 
 
