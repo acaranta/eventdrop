@@ -29,6 +29,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_name") }}</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_owner") }}</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_status") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_stats") }}</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_email") }}</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_created") }}</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ t("admin.events.col_actions") }}</th>
@@ -68,6 +69,20 @@
                                 {{ t("common.closed") }}
                             </span>
                             {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                            {% set s = stats_by_event.get(event.id, {}) %}
+                            <div class="flex flex-col gap-0.5">
+                                <span><span class="font-medium text-gray-700 dark:text-gray-300">{{ s.item_count }}</span> {{ t("events.edit.stat_files")|lower }}</span>
+                                <span><span class="font-medium text-gray-700 dark:text-gray-300">{{ s.contributor_count }}</span> {{ t("events.edit.stat_contributors")|lower }}</span>
+                                <span class="font-medium text-gray-700 dark:text-gray-300">
+                                    {%- if s.total_size >= 1073741824 -%}
+                                        {{ "%.2f"|format(s.total_size / 1073741824) }} GB
+                                    {%- else -%}
+                                        {{ "%.1f"|format(s.total_size / 1048576) }} MB
+                                    {%- endif -%}
+                                </span>
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                             {% if event.email_config and event.email_config.is_enabled %}
@@ -125,7 +140,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center">
+                        <td colspan="7" class="px-6 py-12 text-center">
                             <svg class="mx-auto w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5"/>
                             </svg>

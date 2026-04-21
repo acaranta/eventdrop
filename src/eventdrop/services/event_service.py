@@ -2,7 +2,7 @@ import secrets
 import string
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, distinct
 from typing import Optional
 from eventdrop.database.models import Event, MediaFile, EventEmailConfig
 import uuid
@@ -145,6 +145,34 @@ async def get_event_stats(db: AsyncSession, event_id: str) -> dict:
         "media_count": count_result.scalar() or 0,
         "total_size": size_result.scalar() or 0,
     }
+
+
+async def get_events_stats_batch(db: AsyncSession, event_ids: list[str]) -> dict:
+    """Get stats for multiple events in a single query: item count, contributor count, total size."""
+    if not event_ids:
+        return {}
+    result = await db.execute(
+        select(
+            MediaFile.event_id,
+            func.count(MediaFile.id).label("item_count"),
+            func.count(distinct(MediaFile.uploader_email)).label("contributor_count"),
+            func.sum(MediaFile.file_size).label("total_size"),
+        )
+        .where(MediaFile.event_id.in_(event_ids))
+        .group_by(MediaFile.event_id)
+    )
+    stats = {
+        row.event_id: {
+            "item_count": row.item_count or 0,
+            "contributor_count": row.contributor_count or 0,
+            "total_size": row.total_size or 0,
+        }
+        for row in result.all()
+    }
+    for eid in event_ids:
+        if eid not in stats:
+            stats[eid] = {"item_count": 0, "contributor_count": 0, "total_size": 0}
+    return stats
 
 
 async def upsert_email_config(db: AsyncSession, event_id: str, config_data: dict) -> EventEmailConfig:

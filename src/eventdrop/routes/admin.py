@@ -48,7 +48,8 @@ async def dashboard(request: Request, admin=Depends(require_admin), db: AsyncSes
 @router.get("/events", response_class=HTMLResponse)
 async def admin_events(request: Request, admin=Depends(require_admin), db: AsyncSession = Depends(get_db)):
     events = await event_service.list_all_events(db)
-    return templates.TemplateResponse(request, "admin/events.html", await build_ctx(request, admin, events=events))
+    stats_by_event = await event_service.get_events_stats_batch(db, [e.id for e in events])
+    return templates.TemplateResponse(request, "admin/events.html", await build_ctx(request, admin, events=events, stats_by_event=stats_by_event))
 
 
 @router.get("/events/{event_id}", response_class=HTMLResponse)

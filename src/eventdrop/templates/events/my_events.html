@@ -63,6 +63,37 @@
                     {% endif %}
                 </div>
 
+                <!-- Per-event stats -->
+                {% set s = stats_by_event.get(event.id, {}) %}
+                <div class="flex flex-wrap gap-2 mb-3 text-xs text-gray-500 dark:text-gray-400">
+                    <span class="inline-flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21h18M3.75 3h16.5"/>
+                        </svg>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ s.item_count }}</span> {{ t("events.edit.stat_files")|lower }}
+                    </span>
+                    <span class="text-gray-300 dark:text-gray-600">·</span>
+                    <span class="inline-flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+                        </svg>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ s.contributor_count }}</span> {{ t("events.edit.stat_contributors")|lower }}
+                    </span>
+                    <span class="text-gray-300 dark:text-gray-600">·</span>
+                    <span class="inline-flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 2.625v2.625m0 2.625v2.625"/>
+                        </svg>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">
+                            {%- if s.total_size >= 1073741824 -%}
+                                {{ "%.2f"|format(s.total_size / 1073741824) }} GB
+                            {%- else -%}
+                                {{ "%.1f"|format(s.total_size / 1048576) }} MB
+                            {%- endif -%}
+                        </span>
+                    </span>
+                </div>
+
                 <!-- Upload link with copy -->
                 <div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2 mb-1">
                     <span class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">{{ t("events.list.upload_link_label") }}</span>

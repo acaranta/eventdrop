@@ -359,6 +359,7 @@
       "col_name": "Event-Name",
       "col_owner": "Eigentümer",
       "col_status": "Status",
+      "col_stats": "Statistiken",
       "col_email": "E-Mail",
       "col_created": "Erstellt",
       "col_actions": "Aktionen",

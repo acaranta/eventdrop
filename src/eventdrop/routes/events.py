@@ -19,7 +19,8 @@ router = APIRouter(prefix="/events", tags=["events"])
 @router.get("/", response_class=HTMLResponse)
 async def my_events(request: Request, user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     events = await event_service.list_events_by_owner(db, str(user.id))
-    return templates.TemplateResponse(request, "events/my_events.html", await build_ctx(request, user, events=events))
+    stats_by_event = await event_service.get_events_stats_batch(db, [e.id for e in events])
+    return templates.TemplateResponse(request, "events/my_events.html", await build_ctx(request, user, events=events, stats_by_event=stats_by_event))
 
 
 @router.get("/create", response_class=HTMLResponse)
