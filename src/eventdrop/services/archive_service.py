@@ -151,10 +151,11 @@ async def _build_archive_task(
             archive.phase = "archiving"
             await db.commit()
 
+            part_suffix = f"_part{archive.part_index + 1}" if archive.total_parts > 1 else ""
             zip_filename = (
                 f"{event_name.replace(' ', '_')}_"
                 f"{datetime.now(timezone.utc).strftime('%Y%m%d')}_"
-                f"{len(file_entries)}files.zip"
+                f"{len(file_entries)}files{part_suffix}.zip"
             )
             zip_path = os.path.join(
                 settings.archive_temp_path, f"{uuid.uuid4()}_{zip_filename}"
