@@ -79,7 +79,10 @@ const eventName = {{ event_name | tojson }};
             </svg>
         </div>
         <h1 id="status-heading" class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            {% if archive.status == "processing" %}{{ t("downloads.status_processing") }}{% else %}{{ t("downloads.status_pending") }}{% endif %}
+            {% if archive.phase == "retrieving" %}{{ t("downloads.phase_retrieving") }}
+            {% elif archive.phase == "archiving" %}{{ t("downloads.phase_archiving") }}
+            {% elif archive.status == "processing" %}{{ t("downloads.phase_preparing") }}
+            {% else %}{{ t("downloads.status_pending") }}{% endif %}
         </h1>
         <p class="text-xs text-gray-400 dark:text-gray-500 mt-4">{{ t("downloads.bookmark_hint") }}</p>
         {% endif %}
@@ -103,6 +106,9 @@ const eventName = {{ event_name | tojson }};
         downloadNow: {{ t("downloads.download_now") | tojson }},
         bookmarkHint: {{ t("downloads.bookmark_hint") | tojson }},
         forEvent: {{ t("downloads.for_event") | tojson }},
+        phaseRetrieving: {{ t("downloads.phase_retrieving") | tojson }},
+        phaseArchiving: {{ t("downloads.phase_archiving") | tojson }},
+        phasePreparing: {{ t("downloads.phase_preparing") | tojson }},
     };
 
     const statusHeading = document.getElementById('status-heading');
@@ -159,8 +165,12 @@ const eventName = {{ event_name | tojson }};
             if (!res.ok) return;
             const data = await res.json();
 
-            if (data.status === 'processing' && statusHeading) {
-                statusHeading.textContent = strings.processing;
+            if ((data.status === 'pending' || data.status === 'processing') && statusHeading) {
+                const phaseText = {
+                    retrieving: strings.phaseRetrieving,
+                    archiving: strings.phaseArchiving,
+                }[data.phase] || (data.status === 'processing' ? strings.phasePreparing : strings.pending);
+                statusHeading.textContent = phaseText;
             }
 
             if (data.status === 'ready') {

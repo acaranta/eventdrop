@@ -127,6 +127,7 @@ async def download_archive_status(token: str, db: AsyncSession = Depends(get_db)
         raise HTTPException(status_code=410, detail="Expired")
     resp = {
         "status": archive.status,
+        "phase": archive.phase,
         "file_count": archive.file_count,
         "file_size": archive.file_size,
         "download_url": None,
@@ -155,6 +156,7 @@ async def download_batch_status(batch_id: str, db: AsyncSession = Depends(get_db
             "part_index": ar.part_index,
             "total_parts": ar.total_parts,
             "status": "expired" if expired else ar.status,
+            "phase": ar.phase,
             "file_count": ar.file_count,
             "file_size": ar.file_size,
             "download_url": f"/api/downloads/{ar.token}/file" if ar.status == "ready" and not expired else None,

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import secrets
+import shutil
 import uuid
 import zipfile
 from datetime import datetime, timedelta, timezone
@@ -95,6 +96,7 @@ async def _build_archive_task(
     from eventdrop.storage import get_storage
 
     zip_path = None
+    tmp_dir = None
     async with AsyncSessionLocal() as db:
         try:
             result = await db.execute(
@@ -102,6 +104,7 @@ async def _build_archive_task(
             )
             archive = result.scalar_one()
             archive.status = "processing"
+            archive.phase = "retrieving"
             await db.commit()
             logger.info(f"Building archive {archive_id} for event {event_id}")
 
@@ -121,21 +124,37 @@ async def _build_archive_task(
             )
             media_files = list(result.scalars().all())
 
-            file_data_list = []
+            # Stage 1: retrieve each file to a temp dir on disk (one file in RAM at a time)
+            os.makedirs(settings.archive_temp_path, exist_ok=True)
+            tmp_dir = os.path.join(settings.archive_temp_path, f"tmp_{archive_id}")
+            os.makedirs(tmp_dir, exist_ok=True)
+
+            file_entries = []  # (disk_path, arcname) pairs for ZIP assembly
             for mf in media_files:
                 try:
                     file_obj = await storage.retrieve(mf.stored_path)
                     dt = mf.file_datetime or mf.uploaded_at
                     prefix = dt.strftime("%Y-%m-%d_%H%M%S_") if dt else ""
-                    file_data_list.append((f"{prefix}{mf.original_filename}", file_obj.read()))
+                    arcname = f"{prefix}{mf.original_filename}"
+                    dest_path = os.path.join(tmp_dir, arcname)
+                    with open(dest_path, "wb") as f:
+                        f.write(file_obj.read())
+                    file_entries.append((dest_path, arcname))
                 except Exception as e:
                     logger.warning(f"Could not retrieve {mf.stored_path}: {e}")
 
-            os.makedirs(settings.archive_temp_path, exist_ok=True)
+            # Stage 2: update phase to archiving, then build ZIP from disk
+            result = await db.execute(
+                select(ArchiveRequest).where(ArchiveRequest.id == archive_id)
+            )
+            archive = result.scalar_one()
+            archive.phase = "archiving"
+            await db.commit()
+
             zip_filename = (
                 f"{event_name.replace(' ', '_')}_"
                 f"{datetime.now(timezone.utc).strftime('%Y%m%d')}_"
-                f"{len(file_data_list)}files.zip"
+                f"{len(file_entries)}files.zip"
             )
             zip_path = os.path.join(
                 settings.archive_temp_path, f"{uuid.uuid4()}_{zip_filename}"
@@ -143,25 +162,32 @@ async def _build_archive_task(
 
             def make_zip():
                 with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-                    for filename, data in file_data_list:
-                        zf.writestr(filename, data)
+                    for disk_path, arcname in file_entries:
+                        zf.write(disk_path, arcname=arcname)
                 return os.path.getsize(zip_path)
 
             zip_size = await asyncio.to_thread(make_zip)
+
+            # Stage 3: clean up temp dir, mark ready
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            tmp_dir = None
 
             result = await db.execute(
                 select(ArchiveRequest).where(ArchiveRequest.id == archive_id)
             )
             archive = result.scalar_one()
             archive.file_path = zip_path
-            archive.file_count = len(file_data_list)
+            archive.file_count = len(file_entries)
             archive.file_size = zip_size
             archive.status = "ready"
+            archive.phase = None
             await db.commit()
             logger.info(f"Archive {archive_id} ready: {zip_path} ({zip_size} bytes)")
 
         except Exception as e:
             logger.error(f"Archive {archive_id} failed: {e}")
+            if tmp_dir:
+                shutil.rmtree(tmp_dir, ignore_errors=True)
             try:
                 if zip_path and os.path.exists(zip_path):
                     os.remove(zip_path)
@@ -173,6 +199,7 @@ async def _build_archive_task(
                 )
                 archive = result.scalar_one()
                 archive.status = "failed"
+                archive.phase = None
                 archive.error_message = str(e)
                 await db.commit()
             except Exception as db_err:

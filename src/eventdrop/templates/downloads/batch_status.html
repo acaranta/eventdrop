@@ -58,7 +58,9 @@ const initialParts = {{ archives | length }};
                         {% if expired %}{{ t("downloads.status_expired") }}
                         {% elif archive.status == 'ready' %}{{ t("downloads.status_ready") }}{% if archive.file_count %} — {{ archive.file_count }} files{% if archive.file_size %} ({% if archive.file_size >= 1073741824 %}{{ "%.1f"|format(archive.file_size / 1073741824) }} GB{% else %}{{ "%.0f"|format(archive.file_size / 1048576) }} MB{% endif %}){% endif %}{% endif %}
                         {% elif archive.status == 'failed' %}{{ t("downloads.status_failed") }}
-                        {% elif archive.status == 'processing' %}{{ t("downloads.status_processing") }}
+                        {% elif archive.phase == 'retrieving' %}{{ t("downloads.phase_retrieving") }}
+                        {% elif archive.phase == 'archiving' %}{{ t("downloads.phase_archiving") }}
+                        {% elif archive.status == 'processing' %}{{ t("downloads.phase_preparing") }}
                         {% else %}{{ t("downloads.status_pending") }}{% endif %}
                     </p>
                 </div>
@@ -93,6 +95,9 @@ const initialParts = {{ archives | length }};
         expired: {{ t("downloads.status_expired") | tojson }},
         downloadNow: {{ t("downloads.download_now") | tojson }},
         batchPart: {{ t("downloads.batch_part") | tojson }},
+        phaseRetrieving: {{ t("downloads.phase_retrieving") | tojson }},
+        phaseArchiving: {{ t("downloads.phase_archiving") | tojson }},
+        phasePreparing: {{ t("downloads.phase_preparing") | tojson }},
     };
 
     function fmtSize(bytes) {
@@ -120,8 +125,14 @@ const initialParts = {{ archives | length }};
         if (part.status === 'expired') colourClass = 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/20';
         row.className += ' ' + colourClass;
 
-        // Status text
-        let txt = strings[part.status] || strings.pending;
+        // Status text — use phase label when actively processing
+        let txt;
+        if (part.status === 'pending' || part.status === 'processing') {
+            txt = { retrieving: strings.phaseRetrieving, archiving: strings.phaseArchiving }[part.phase]
+                || (part.status === 'processing' ? strings.phasePreparing : strings.pending);
+        } else {
+            txt = strings[part.status] || strings.pending;
+        }
         if (part.status === 'ready' && part.file_count) {
             txt += ' — ' + part.file_count + ' files';
             const sz = fmtSize(part.file_size);

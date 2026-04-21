@@ -150,6 +150,7 @@ class ArchiveRequest(Base):
     batch_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
     part_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total_parts: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    phase: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
 
     # Relationships
     event: Mapped["Event"] = relationship("Event", back_populates="archive_requests")
