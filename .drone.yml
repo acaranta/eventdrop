@@ -1,0 +1,9 @@
+---
+kind: template
+load: docker-build-multiarch.yaml
+data:
+  dockerfiledir: .
+  hubimagename: eventdrop
+  repotype: hub
+  imagetag: latest  
+  branches: ['master', 'main']
