@@ -21,8 +21,12 @@ services:
       EVENTDROP_EMAIL_POLL_INTERVAL_SECONDS: "120"
       EVENTDROP_ARCHIVE_TEMP_PATH: "/data/tmp"
       EVENTDROP_ARCHIVE_EXPIRY_MINUTES: "15"
-      # Trust forwarded IP headers from the reverse proxy
-      UVICORN_FORWARDED_ALLOW_IPS: "*"
+      # Logging
+      EVENTDROP_LOG_LEVEL: "INFO"
+      EVENTDROP_LOG_AS_JSON: "false"
+      # Trust X-Forwarded-For from the reverse proxy. Set to "false" if the app is
+      # reachable directly, otherwise clients can spoof their logged IP.
+      EVENTDROP_TRUST_PROXY_HEADERS: "true"
       # SMTP (required for password reset emails)
       # EVENTDROP_SMTP_HOST: "smtp.example.com"
       # EVENTDROP_SMTP_PORT: "587"

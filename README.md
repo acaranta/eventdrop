@@ -135,6 +135,9 @@ All settings are read from environment variables prefixed with `EVENTDROP_`. The
 | `EVENTDROP_DOWNLOAD_WARN_MAX_SIZE_MB` | `1000` | Total gallery size in MB above which the warning banner is shown |
 | `EVENTDROP_BASE_URL` | `http://localhost:8000` | Public base URL of the application — used in generated upload links and QR codes |
 | `EVENTDROP_MAX_UPLOAD_SIZE_MB` | `500` | Maximum allowed size per uploaded file in megabytes |
+| `EVENTDROP_LOG_LEVEL` | `INFO` | Root log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `EVENTDROP_LOG_AS_JSON` | `false` | Emit one JSON object per log line instead of human-readable text |
+| `EVENTDROP_TRUST_PROXY_HEADERS` | `false` | Read the client IP from `X-Forwarded-For` / `X-Real-IP`. Enable only behind a trusted reverse proxy |
 
 ---
 
@@ -596,6 +599,37 @@ Uploaded file types are validated using `python-magic` (libmagic), which inspect
 
 ### Reverse Proxy
 
-For production deployments, run EventDrop behind a TLS-terminating reverse proxy (nginx, Caddy, Traefik). Ensure the proxy forwards `X-Forwarded-For` and `X-Forwarded-Proto` headers if needed for correct URL generation.
+For production deployments, run EventDrop behind a TLS-terminating reverse proxy (nginx, Caddy, Traefik).
 
 Set `EVENTDROP_BASE_URL` to the public HTTPS URL so that generated upload links and QR codes point to the correct address.
+
+Behind a proxy, every request appears to originate from the proxy itself, so logs would otherwise record the proxy's address for all traffic. To log the real client, configure the proxy to forward `X-Forwarded-For` (nginx: `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`) and set:
+
+```
+EVENTDROP_TRUST_PROXY_HEADERS=true
+```
+
+> **Security note:** leave this at `false` if EventDrop is reachable directly, bypassing the proxy. When enabled, the header is trusted unconditionally, so any client able to connect to the app directly can forge the IP recorded in the logs. Bind the app to the proxy's network only (in Docker Compose, expose the port to the proxy rather than to the host) before enabling it.
+
+The container starts uvicorn with `--no-proxy-headers` so that this setting is the only thing controlling proxy trust. Uvicorn's own proxy header handling is enabled by default and trusts `127.0.0.1`, which would otherwise honour `X-Forwarded-For` from loopback even with `EVENTDROP_TRUST_PROXY_HEADERS=false`. If you run uvicorn manually and want the same guarantee, pass `--no-proxy-headers` yourself.
+
+---
+
+## Logging
+
+EventDrop logs to stdout, which Docker captures (`docker compose logs -f eventdrop`).
+
+By default logs are human-readable and timestamped:
+
+```
+2026-07-19T18:21:04.512 INFO     [eventdrop.main] Email ingestion background task started.
+2026-07-19T18:21:09.887 INFO     [uvicorn.access] 203.0.113.7:0 - "GET /events/?page=2 HTTP/1.1" 200
+```
+
+Set `EVENTDROP_LOG_AS_JSON=true` to emit one JSON object per line for ingestion into a log aggregator (Loki, ELK, CloudWatch). Web requests carry structured fields:
+
+```json
+{"ts":"2026-07-19T18:21:09.887+00:00","level":"INFO","logger":"uvicorn.access","msg":"203.0.113.7:0 - \"GET /events/?page=2 HTTP/1.1\" 200","module":"h11_impl","func":"send","line":482,"client_ip":"203.0.113.7","method":"GET","path":"/events/","query":"page=2","http_version":"1.1","status":200}
+```
+
+Exception tracebacks are carried in an `exc` field so that a stack trace remains a single parseable line rather than spilling across many.

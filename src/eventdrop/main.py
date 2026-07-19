@@ -14,7 +14,13 @@ from starlette.middleware.sessions import SessionMiddleware
 from eventdrop.config import settings
 from eventdrop.database.engine import engine
 from eventdrop.database.models import Base
+from eventdrop.logging_config import setup_logging
 from eventdrop.templating import templates
+from eventdrop.utils.client_ip import ClientIPMiddleware
+
+# Must run before any logger is used. Uvicorn applies its own logging config before
+# importing this module, so configuring here deliberately overrides it.
+setup_logging()
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +112,9 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
+# Registered last so it is outermost: add_middleware prepends, and the client scope must
+# be rewritten before anything downstream reads it.
+app.add_middleware(ClientIPMiddleware)
 
 # Mount static files
 static_dir = BASE_DIR / "static"

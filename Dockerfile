@@ -28,5 +28,9 @@ RUN mkdir -p /data/media /data/tmp
 
 EXPOSE 8000
 
-# Run migrations then start server
-CMD ["sh", "-c", "uv run alembic upgrade head && uv run uvicorn eventdrop.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'"]
+# Run migrations then start server.
+# --no-proxy-headers disables uvicorn's own X-Forwarded-For handling (on by default,
+# trusting 127.0.0.1) so that EVENTDROP_TRUST_PROXY_HEADERS is the single source of
+# truth. The app generates absolute URLs from EVENTDROP_BASE_URL, never from the
+# request scheme, so nothing depends on uvicorn's X-Forwarded-Proto rewriting.
+CMD ["sh", "-c", "uv run alembic upgrade head && uv run uvicorn eventdrop.main:app --host 0.0.0.0 --port 8000 --no-proxy-headers"]

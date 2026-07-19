@@ -60,6 +60,13 @@ class Settings(BaseSettings):
     base_url: str = "http://localhost:8000"
     max_upload_size_mb: int = 500
 
+    # Logging
+    log_level: str = "INFO"
+    log_as_json: bool = False
+    # Only enable when EventDrop sits behind a trusted reverse proxy. When the app is
+    # reachable directly, a client can spoof its logged IP via X-Forwarded-For.
+    trust_proxy_headers: bool = False
+
     model_config = {"env_prefix": "EVENTDROP_"}
 
     def get_database_url(self) -> str:
