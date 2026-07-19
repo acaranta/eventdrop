@@ -54,7 +54,7 @@ class Event(Base):
     owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
     is_gallery_public: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     allow_public_download: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    uploads_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now, onupdate=_now, nullable=False)
 

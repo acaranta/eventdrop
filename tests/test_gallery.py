@@ -40,7 +40,7 @@ async def test_private_gallery_redirects_anonymous_user(
         owner_id=test_user.id,
         is_gallery_public=False,
         allow_public_download=False,
-        is_active=True,
+        uploads_enabled=True,
     )
     db_session.add(private_event)
     await db_session.commit()
@@ -64,7 +64,7 @@ async def test_private_gallery_accessible_to_owner(
         owner_id=test_user.id,
         is_gallery_public=False,
         allow_public_download=False,
-        is_active=True,
+        uploads_enabled=True,
     )
     db_session.add(private_event)
     await db_session.commit()
@@ -89,7 +89,7 @@ async def test_admin_can_access_private_gallery(
         owner_id=test_user.id,
         is_gallery_public=False,
         allow_public_download=False,
-        is_active=True,
+        uploads_enabled=True,
     )
     db_session.add(private_event)
     await db_session.commit()
@@ -121,7 +121,7 @@ async def test_private_gallery_returns_403_for_logged_in_non_owner(
         owner_id=test_user.id,
         is_gallery_public=False,
         allow_public_download=False,
-        is_active=True,
+        uploads_enabled=True,
     )
     db_session.add(private_event)
     await db_session.commit()

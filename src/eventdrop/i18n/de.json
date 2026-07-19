@@ -118,7 +118,7 @@
       "event_count_one": "1 Event",
       "event_count_many": "{n} Events",
       "new_event_btn": "Neues Event",
-      "badge_public_gallery": "Öffentliche Galerie",
+      "gallery_public": "Galerie öffentlich",
       "badge_email_ingestion": "E-Mail-Ingestion",
       "upload_link_label": "Upload:",
       "copy_upload_link": "Link kopieren",
@@ -133,7 +133,10 @@
       "regen_failed_msg": "Fehler bei der Neuerstellung",
       "empty_heading": "Noch keine Events",
       "empty_desc": "Erstellen Sie Ihr erstes Event, um Fotos und Videos zu sammeln.",
-      "empty_btn": "Erstes Event erstellen"
+      "empty_btn": "Erstes Event erstellen",
+      "gallery_private": "Galerie privat",
+      "uploads_enabled": "Uploads offen",
+      "uploads_disabled": "Uploads geschlossen"
     },
     "create": {
       "title": "Event erstellen — EventDrop",
@@ -167,8 +170,8 @@
       "btn_manage": "Verwalten",
       "btn_download_qr": "QR herunterladen",
       "section_details": "Event-Details",
-      "field_event_active": "Event aktiv",
-      "event_active_hint": "Neue Uploads akzeptieren wenn aktiv",
+      "field_uploads_enabled": "Uploads aktiviert",
+      "uploads_enabled_hint": "Neue Uploads akzeptieren. Die Galerie bleibt in beiden Fällen sichtbar.",
       "field_public_gallery": "Öffentliche Galerie",
       "public_gallery_hint": "Jeder mit dem Link kann die Galerie sehen",
       "field_allow_download": "Öffentlicher Download",
@@ -234,7 +237,11 @@
     "status_done": "Fertig",
     "status_error": "Fehler",
     "status_error_network": "Netzwerkfehler",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "closed_heading": "Uploads sind geschlossen",
+    "closed_desc": "Dieses Event nimmt keine neuen Fotos oder Videos mehr an.",
+    "closed_gallery_note": "Die Galerie kann weiterhin angesehen werden.",
+    "closed_unavailable": "Dieses Event ist nicht mehr verfügbar."
   },
   "gallery": {
     "title": "Galerie — {name} — EventDrop",

@@ -12,6 +12,7 @@ os.environ.setdefault("EVENTDROP_EMAIL_INGESTION_ENABLED", "false")
 os.environ.setdefault("EVENTDROP_SECRET_KEY", "test-secret-key-for-testing-only")
 
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy.pool import StaticPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 from eventdrop.main import app
@@ -30,9 +31,14 @@ def event_loop():
     loop.close()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture
 async def test_engine():
-    engine = create_async_engine(TEST_DB_URL, echo=False)
+    # Function-scoped with StaticPool: every test gets its own schema on a single
+    # shared in-memory connection. A session-scoped engine let rows leak between
+    # tests — fixture teardown deletes through db_session while routes commit
+    # through another session, so the delete silently no-ops and the next test
+    # trips the users.username UNIQUE constraint.
+    engine = create_async_engine(TEST_DB_URL, echo=False, poolclass=StaticPool)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield engine
@@ -50,7 +56,7 @@ async def db_session(test_engine):
 
 
 @pytest_asyncio.fixture
-async def test_client(test_engine):
+async def test_client(test_engine, monkeypatch):
     AsyncTestSession = async_sessionmaker(
         test_engine, class_=AsyncSession, expire_on_commit=False
     )
@@ -65,6 +71,16 @@ async def test_client(test_engine):
                 raise
 
     app.dependency_overrides[get_db] = override_get_db
+
+    # build_ctx() reads allow_registration through its own session from the app
+    # engine rather than the injected dependency, so overriding get_db alone
+    # leaves it pointing at an empty database. Redirect it at the test engine.
+    import eventdrop.database.engine as db_engine
+    import eventdrop.utils.context as ctx
+
+    monkeypatch.setattr(db_engine, "AsyncSessionLocal", AsyncTestSession)
+    # that value is memoised behind a TTL cache — clear it so each test re-reads
+    ctx.invalidate_registration_cache()
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -121,7 +137,7 @@ async def test_event(db_session, test_user):
         owner_id=test_user.id,
         is_gallery_public=True,
         allow_public_download=True,
-        is_active=True,
+        uploads_enabled=True,
     )
     db_session.add(event)
     await db_session.commit()

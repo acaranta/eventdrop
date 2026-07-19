@@ -86,7 +86,7 @@ async def test_event_owner_can_edit_event(
             "description": "Updated description",
             "is_gallery_public": "false",
             "allow_public_download": "false",
-            "is_active": "true",
+            "uploads_enabled": "true",
         },
         follow_redirects=False,
     )
@@ -127,11 +127,38 @@ async def test_non_owner_cannot_edit_event(
             "description": "Not allowed",
             "is_gallery_public": "false",
             "allow_public_download": "false",
-            "is_active": "true",
+            "uploads_enabled": "true",
         },
         follow_redirects=False,
     )
     assert response.status_code == 403
+    await _logout(test_client)
+
+
+@pytest.mark.asyncio
+async def test_omitting_uploads_enabled_disables_uploads(
+    test_client: AsyncClient, db_session, test_user: User, test_event: Event
+):
+    """Regression: an unchecked checkbox is absent from the POST body entirely.
+
+    The form param default must therefore be False — a True default silently
+    reverted every attempt to close uploads.
+    """
+    await _login(test_client, "testuser", "password123")
+    response = await test_client.post(
+        f"/events/{test_event.id}/edit",
+        data={
+            "name": test_event.name,
+            "description": "",
+            # no uploads_enabled key at all — this is what a browser sends
+            # when the toggle is unchecked
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code in (302, 303)
+
+    await db_session.refresh(test_event)
+    assert test_event.uploads_enabled is False
     await _logout(test_client)
 
 
@@ -148,7 +175,7 @@ async def test_admin_can_edit_any_event(
             "description": "Edited by admin",
             "is_gallery_public": "false",
             "allow_public_download": "false",
-            "is_active": "true",
+            "uploads_enabled": "true",
         },
         follow_redirects=False,
     )

@@ -24,25 +24,112 @@ async def test_upload_page_returns_404_for_nonexistent_event(test_client: AsyncC
 
 
 @pytest.mark.asyncio
-async def test_upload_page_returns_404_for_inactive_event(
+async def test_upload_page_shows_closed_notice_when_uploads_disabled(
     test_client: AsyncClient, db_session, test_user: User
 ):
-    """GET /e/{event_id}/ for an inactive event should return 404."""
+    """Uploads disabled + private gallery → 200 with a closed notice, no gallery link."""
     from eventdrop.database.models import Event as EventModel
 
-    inactive_event = EventModel(
-        id="inactev1",
-        name="Inactive Event",
+    closed_event = EventModel(
+        id="closedev1",
+        name="Closed Event",
         owner_id=test_user.id,
-        is_active=False,
+        uploads_enabled=False,
+        is_gallery_public=False,
     )
-    db_session.add(inactive_event)
+    db_session.add(closed_event)
     await db_session.commit()
 
-    response = await test_client.get("/e/inactev1/")
+    response = await test_client.get("/e/closedev1/")
+    assert response.status_code == 200
+    assert "Uploads are closed" in response.text
+    # Private gallery + anonymous visitor → no link offered
+    assert "/e/closedev1/gallery/" not in response.text
+
+    await db_session.delete(closed_event)
+    await db_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_upload_page_offers_gallery_link_when_gallery_public(
+    test_client: AsyncClient, db_session, test_user: User
+):
+    """Uploads disabled + public gallery → closed notice that still links the gallery."""
+    from eventdrop.database.models import Event as EventModel
+
+    closed_event = EventModel(
+        id="closedev2",
+        name="Closed But Public",
+        owner_id=test_user.id,
+        uploads_enabled=False,
+        is_gallery_public=True,
+    )
+    db_session.add(closed_event)
+    await db_session.commit()
+
+    response = await test_client.get("/e/closedev2/")
+    assert response.status_code == 200
+    assert "Uploads are closed" in response.text
+    assert "/e/closedev2/gallery/" in response.text
+
+    await db_session.delete(closed_event)
+    await db_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_closed_page_offers_gallery_link_to_owner_when_private(
+    test_client: AsyncClient, db_session, test_user: User
+):
+    """Owners can reach a private gallery, so they get the link even when it isn't public."""
+    from eventdrop.database.models import Event as EventModel
+
+    closed_event = EventModel(
+        id="closedev4",
+        name="Closed Private",
+        owner_id=test_user.id,
+        uploads_enabled=False,
+        is_gallery_public=False,
+    )
+    db_session.add(closed_event)
+    await db_session.commit()
+
+    await test_client.post(
+        "/auth/login",
+        data={"username": "testuser", "password": "password123"},
+        follow_redirects=True,
+    )
+    response = await test_client.get("/e/closedev4/")
+    assert response.status_code == 200
+    assert "/e/closedev4/gallery/" in response.text
+    await test_client.get("/auth/logout", follow_redirects=True)
+
+    await db_session.delete(closed_event)
+    await db_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_upload_rejected_when_uploads_disabled(
+    test_client: AsyncClient, db_session, test_user: User
+):
+    """The closed landing page must not become a way around the upload guard."""
+    from eventdrop.database.models import Event as EventModel
+
+    closed_event = EventModel(
+        id="closedev3",
+        name="Closed Event",
+        owner_id=test_user.id,
+        uploads_enabled=False,
+    )
+    db_session.add(closed_event)
+    await db_session.commit()
+
+    response = await test_client.post(
+        "/api/e/closedev3/upload",
+        files={"file": ("x.png", io.BytesIO(b"fake"), "image/png")},
+    )
     assert response.status_code == 404
 
-    await db_session.delete(inactive_event)
+    await db_session.delete(closed_event)
     await db_session.commit()
 
 

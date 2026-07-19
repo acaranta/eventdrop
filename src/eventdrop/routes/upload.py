@@ -30,8 +30,24 @@ async def upload_page(event_id: str, request: Request, db: AsyncSession = Depend
         .where(Event.id == event_id)
     )
     event = result.scalar_one_or_none()
-    if not event or not event.is_active:
-        raise HTTPException(status_code=404, detail="Event not found or uploads closed")
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    from eventdrop.auth.dependencies import get_current_user_optional
+
+    if not event.uploads_enabled:
+        # Uploads are closed, but the gallery may still be viewable — render an
+        # explanatory page rather than a bare 404. Owners/admins can reach a
+        # private gallery, so they get the link even when it isn't public.
+        auth_user = await get_current_user_optional(request, db)
+        is_privileged = auth_user and (
+            str(auth_user.id) == str(event.owner_id) or auth_user.is_admin
+        )
+        return templates.TemplateResponse(request, "upload/closed.html", await build_ctx(
+            request, auth_user,
+            event=event,
+            show_gallery=bool(event.is_gallery_public or is_privileged),
+        ))
 
     # Get email ingestion address if configured
     email_ingestion_address = None
@@ -46,7 +62,6 @@ async def upload_page(event_id: str, request: Request, db: AsyncSession = Depend
         if session:
             uploader_email = session.email
 
-    from eventdrop.auth.dependencies import get_current_user_optional
     from eventdrop.utils.qrcode import generate_qr_code_base64
     auth_user = await get_current_user_optional(request, db)
     upload_url = f"{settings.base_url}/e/{event.id}/"
@@ -72,7 +87,7 @@ async def set_uploader_email(
     # Validate event exists
     result = await db.execute(select(Event).where(Event.id == event_id))
     event = result.scalar_one_or_none()
-    if not event or not event.is_active:
+    if not event or not event.uploads_enabled:
         raise HTTPException(status_code=404)
 
     session = await get_or_create_uploader_session(db, email)
@@ -103,7 +118,7 @@ async def upload_file(
     # Get event
     result = await db.execute(select(Event).where(Event.id == event_id))
     event = result.scalar_one_or_none()
-    if not event or not event.is_active:
+    if not event or not event.uploads_enabled:
         raise HTTPException(status_code=404, detail="Event not found or uploads closed")
 
     # Get uploader email from cookie session

@@ -109,7 +109,7 @@ async def edit_event_submit(
     description: Optional[str] = Form(None),
     is_gallery_public: bool = Form(False),
     allow_public_download: bool = Form(False),
-    is_active: bool = Form(False),
+    uploads_enabled: bool = Form(False),
     email_enabled: bool = Form(False),
     email_protocol: Optional[str] = Form(None),
     email_server_host: Optional[str] = Form(None),
@@ -129,7 +129,7 @@ async def edit_event_submit(
     await event_service.update_event(db, event_id, name=name, description=description,
                                      is_gallery_public=is_gallery_public,
                                      allow_public_download=allow_public_download,
-                                     is_active=is_active)
+                                     uploads_enabled=uploads_enabled)
 
     if settings.email_ingestion_enabled:
         if email_enabled and email_server_host and email_username:

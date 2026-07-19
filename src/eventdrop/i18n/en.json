@@ -118,7 +118,7 @@
       "event_count_one": "1 event",
       "event_count_many": "{n} events",
       "new_event_btn": "New Event",
-      "badge_public_gallery": "Public gallery",
+      "gallery_public": "Gallery public",
       "badge_email_ingestion": "Email ingestion",
       "upload_link_label": "Upload:",
       "copy_upload_link": "Copy upload link",
@@ -133,7 +133,10 @@
       "regen_failed_msg": "Regeneration failed",
       "empty_heading": "No events yet",
       "empty_desc": "Create your first event to start collecting photos and videos from your guests.",
-      "empty_btn": "Create your first event"
+      "empty_btn": "Create your first event",
+      "gallery_private": "Gallery private",
+      "uploads_enabled": "Uploads open",
+      "uploads_disabled": "Uploads closed"
     },
     "create": {
       "title": "Create Event — EventDrop",
@@ -167,8 +170,8 @@
       "btn_manage": "Manage",
       "btn_download_qr": "Download QR",
       "section_details": "Event Details",
-      "field_event_active": "Event Active",
-      "event_active_hint": "Accept new uploads when active",
+      "field_uploads_enabled": "Uploads Enabled",
+      "uploads_enabled_hint": "Accept new uploads. The gallery stays viewable either way.",
       "field_public_gallery": "Public Gallery",
       "public_gallery_hint": "Anyone with the link can view the gallery",
       "field_allow_download": "Allow Public Download",
@@ -234,7 +237,11 @@
     "status_done": "Done",
     "status_error": "Error",
     "status_error_network": "Network error",
-    "retry": "Retry"
+    "retry": "Retry",
+    "closed_heading": "Uploads are closed",
+    "closed_desc": "This event is no longer accepting new photos or videos.",
+    "closed_gallery_note": "The gallery is still available to view.",
+    "closed_unavailable": "This event is no longer available."
   },
   "gallery": {
     "title": "Gallery — {name} — EventDrop",

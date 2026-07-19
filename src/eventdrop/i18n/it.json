@@ -118,7 +118,7 @@
       "event_count_one": "1 evento",
       "event_count_many": "{n} eventi",
       "new_event_btn": "Nuovo evento",
-      "badge_public_gallery": "Galleria pubblica",
+      "gallery_public": "Galleria pubblica",
       "badge_email_ingestion": "Acquisizione email",
       "upload_link_label": "Carica:",
       "copy_upload_link": "Copia link",
@@ -133,7 +133,10 @@
       "regen_failed_msg": "Rigenerazione fallita",
       "empty_heading": "Nessun evento",
       "empty_desc": "Crea il tuo primo evento per iniziare a raccogliere foto e video.",
-      "empty_btn": "Crea il primo evento"
+      "empty_btn": "Crea il primo evento",
+      "gallery_private": "Galleria privata",
+      "uploads_enabled": "Caricamenti aperti",
+      "uploads_disabled": "Caricamenti chiusi"
     },
     "create": {
       "title": "Crea evento — EventDrop",
@@ -167,8 +170,8 @@
       "btn_manage": "Gestisci",
       "btn_download_qr": "Scarica QR",
       "section_details": "Dettagli evento",
-      "field_event_active": "Evento attivo",
-      "event_active_hint": "Accetta nuovi caricamenti quando attivo",
+      "field_uploads_enabled": "Caricamenti attivi",
+      "uploads_enabled_hint": "Accetta nuovi caricamenti. La galleria resta visibile in entrambi i casi.",
       "field_public_gallery": "Galleria pubblica",
       "public_gallery_hint": "Chiunque abbia il link può vedere la galleria",
       "field_allow_download": "Consenti download pubblico",
@@ -234,7 +237,11 @@
     "status_done": "Completato",
     "status_error": "Errore",
     "status_error_network": "Errore di rete",
-    "retry": "Riprova"
+    "retry": "Riprova",
+    "closed_heading": "I caricamenti sono chiusi",
+    "closed_desc": "Questo evento non accetta più nuove foto o video.",
+    "closed_gallery_note": "La galleria è ancora consultabile.",
+    "closed_unavailable": "Questo evento non è più disponibile."
   },
   "gallery": {
     "title": "Galleria — {name} — EventDrop",
