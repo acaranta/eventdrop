@@ -96,29 +96,9 @@ async def test_event_owner_can_edit_event(
 
 @pytest.mark.asyncio
 async def test_non_owner_cannot_edit_event(
-    test_client: AsyncClient, test_admin: User, test_event: Event
+    test_client: AsyncClient, test_other_user: User, test_event: Event
 ):
     """POST /events/{id}/edit by a non-owner non-admin should return 403."""
-    # Create and login as a different non-admin user
-    import uuid
-    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-    from eventdrop.database.models import Base, User as UserModel
-    from eventdrop.auth.passwords import hash_password
-
-    # Sign up a second regular user
-    await test_client.post(
-        "/auth/signup",
-        data={
-            "username": "anotherusr",
-            "email": "another2@example.com",
-            "password": "anotherpass",
-            "confirm_password": "anotherpass",
-        },
-        follow_redirects=True,
-    )
-    await _logout(test_client)
-
-    # Log in as that other user
     await _login(test_client, "anotherusr", "anotherpass")
     response = await test_client.post(
         f"/events/{test_event.id}/edit",

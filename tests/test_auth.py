@@ -26,7 +26,7 @@ async def test_signup_page_returns_200(test_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_signup_creates_user_and_redirects(test_client: AsyncClient):
+async def test_signup_creates_user_and_redirects(test_client: AsyncClient, enable_registration):
     """POST /auth/signup with valid data should create user and redirect."""
     response = await test_client.post(
         "/auth/signup",
@@ -99,7 +99,7 @@ async def test_logout_clears_session_and_redirects(test_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_signup_with_short_password_fails(test_client: AsyncClient):
+async def test_signup_with_short_password_fails(test_client: AsyncClient, enable_registration):
     """POST /auth/signup with a password shorter than 8 chars should fail."""
     response = await test_client.post(
         "/auth/signup",
@@ -117,7 +117,7 @@ async def test_signup_with_short_password_fails(test_client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_signup_with_duplicate_username_fails(
-    test_client: AsyncClient, test_user: User
+    test_client: AsyncClient, test_user: User, enable_registration
 ):
     """POST /auth/signup with an already-taken username should return 400."""
     response = await test_client.post(
@@ -135,7 +135,7 @@ async def test_signup_with_duplicate_username_fails(
 
 
 @pytest.mark.asyncio
-async def test_signup_password_mismatch_fails(test_client: AsyncClient):
+async def test_signup_password_mismatch_fails(test_client: AsyncClient, enable_registration):
     """POST /auth/signup with non-matching passwords should return 400."""
     response = await test_client.post(
         "/auth/signup",
@@ -148,3 +148,19 @@ async def test_signup_password_mismatch_fails(test_client: AsyncClient):
         follow_redirects=False,
     )
     assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_signup_rejected_when_registration_disabled(test_client: AsyncClient):
+    """Registration ships disabled — signup must be refused without enable_registration."""
+    response = await test_client.post(
+        "/auth/signup",
+        data={
+            "username": "unwanteduser",
+            "email": "unwanted@example.com",
+            "password": "securepass",
+            "confirm_password": "securepass",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 403

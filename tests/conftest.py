@@ -91,12 +91,49 @@ async def test_client(test_engine, monkeypatch):
 
 
 @pytest_asyncio.fixture
+async def enable_registration(db_session):
+    """Open self-service signup, which ships disabled by default.
+
+    Tests that exercise the signup flow need this; without it the route
+    correctly returns 403 and the assertions read as mysterious failures.
+    """
+    from eventdrop.database.models import AppSettings
+    from eventdrop.utils.context import invalidate_registration_cache
+
+    db_session.add(AppSettings(key="allow_registration", value="true"))
+    await db_session.commit()
+    invalidate_registration_cache()
+    yield
+    invalidate_registration_cache()
+
+
+@pytest_asyncio.fixture
 async def test_user(db_session):
     user = User(
         id=str(uuid.uuid4()),
         username="testuser",
         email="test@example.com",
         password_hash=hash_password("password123"),
+        is_admin=False,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    yield user
+    try:
+        await db_session.delete(user)
+        await db_session.commit()
+    except Exception:
+        await db_session.rollback()
+
+
+@pytest_asyncio.fixture
+async def test_other_user(db_session):
+    """A second non-admin user, for authorization tests."""
+    user = User(
+        id=str(uuid.uuid4()),
+        username="anotherusr",
+        email="another2@example.com",
+        password_hash=hash_password("anotherpass"),
         is_admin=False,
     )
     db_session.add(user)
